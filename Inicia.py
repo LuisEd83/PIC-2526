@@ -1,0 +1,78 @@
+# -*- coding: utf-8 -*-
+"""
+dominio(): fixa o dominio retangular no plano c = c0
+concentrations(): fixa as concentracoes cmin e cmax
+viscosidades(): fixa as viscosidades muw0(inicial da agua), muo e mug
+baricentrica(): fixa se vai usar coordenadas baricentricas ou nao
+DadosIntegracao(): fixa o comprimento do passo de integracao 
+                   e os numero de pontos com passo h
+ambiente3d(): Seta o ambiente 3d e devolve "axes" para plotagem 3d
+
+"""
+import matplotlib.pyplot as plt
+
+import Functions as fun
+
+def dominio():
+# Define uma regiao R retangular para calculos.
+# Quando tal regiao R ultrapassar os limites do triangulo, as
+# funcoes especificas devem fazer esta restricao adicional de considerar
+# pontos apenas na interseccao da regiao R com o triangulo
+    
+    
+    triang = 1 # 1 caso seja calculado em todo o triangulo.
+    
+    if triang == 1: # Calculos no triangulo todo
+        umin = 0.0
+        umax = 1.0
+        vmin = 0.0
+        vmax = 1.0
+    else: # Calculo em regiao retangular especifica para "zoom"
+        umin = 0.0#0.315#0.2
+        umax = 1.0#0.415#0.6
+        vmin = 0.0#0.0#0.515#0.35
+        vmax = 1.0#1.0#0.630#0.75
+        
+    return(umin, umax, vmin, vmax, triang)
+    
+
+def concentrations(): #Viscosidade da agua
+    cmin = 0.0#0.5928522166980628
+    #cmax = 1.0#0.666616 #0.284124  # #1.0 Normal# L1 0.28017 #L2 e L3 0.284124
+    cmax = 1.0#0.66#0.28017 #L1
+    return(cmin,cmax)
+
+def viscosidades(): #Viscosidades da agua, do oleo e do gas
+    muw0 = 1.0 #Viscosidade inicial sem polimero
+    muo = 4.0#4.0#9.5
+    mug = 0.25#0.25#0.45
+    return(muw0, muo, mug)
+    
+def baricentrica(): #Mapeamento ou nao?
+    x = 1# x = 1 se quiser coordenadas baricentricas
+    return(x)
+    
+def DadosIntegracao(): #Para integracao dos contatos
+    N = 20000 # Numero de pontos na curva integral do contato para h > 0
+    h = 0.02#  # Passo de integração
+    return(N, h)
+
+
+def bib():
+    lib = 0 # 0 if matplotlib LAPTOP, or 1 if matplotlib Desktop
+    return(lib)
+
+def ambiente3d():
+    lib = bib()
+    figure = plt.figure('PrismDomain')
+    print('\n \n Inicia.bib(): lib = 1 if matplotlib3.2-Laptop')
+    print('               lib = 0 if not matplotlib3.2-desktop.')
+    print('               Actual value of lib =', lib, '\n\n')
+    if lib == 0:
+        axes = figure.gca(projection='3d')
+    else:
+        axes = figure.add_subplot(projection='3d')
+        axes.view_init(elev=30., azim=-130.) #Initial Camera Position
+            
+    return(axes)
+
