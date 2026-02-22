@@ -53,3 +53,5 @@ ax.plot([O1,O1], [O2,O2], [cmin,cmax], 'k')
 ax.set_xlabel('$u$')
 ax.set_ylabel('$v$')
 ax.set_zlabel('$z$')
+
+ini.plt.show() #Sem isso o prisma nao e plotado

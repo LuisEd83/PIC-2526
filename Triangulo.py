@@ -46,9 +46,10 @@ plt.figure('uv projection on saturation triangle', figsize=(8,8), dpi=80)
 plt.xlabel('$s_w$')
 plt.ylabel('$s_o$')
 #plt.axis('off')
-#plt.grid()
+plt.grid()
 plt.plot([G1, W1], [G2, W2], 'k-') 
 plt.plot([G1, O1], [G2, O2], 'k-') 
 plt.plot([W1, O1], [W2, O2], 'k-') 
 
 
+plt.show()

@@ -69,7 +69,7 @@ def ambiente3d():
     print('               lib = 0 if not matplotlib3.2-desktop.')
     print('               Actual value of lib =', lib, '\n\n')
     if lib == 0:
-        axes = figure.gca(projection='3d')
+        axes = figure.add_subplot(111, projection='3d') #axes = figure.gca(projection='3d') [Houve uma atualizacao no matplotlib, agora a funcao deve estar como está escrito]
     else:
         axes = figure.add_subplot(projection='3d')
         axes.view_init(elev=30., azim=-130.) #Initial Camera Position
