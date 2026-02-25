@@ -52,4 +52,4 @@ plt.plot([G1, O1], [G2, O2], 'k-')
 plt.plot([W1, O1], [W2, O2], 'k-') 
 
 
-plt.show()
+plt.show() #Adicionei esta linha pois sem ela, o triangulo nao e mostrado 

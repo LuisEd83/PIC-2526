@@ -1,5 +1,5 @@
 """
-Modulo: Curvas integrais
+Modulo: Funcoes determinates
 
 Objetivo:
 - Definir funcoes determinantes a partir de funcoes pre-estabelecidas
@@ -7,6 +7,7 @@ pela biblioteca Functions.
 - Definir funcao norma N
 - Definir as componentes do campo
 
+Com isto concluido, poderemos passar para proxima etapa: integrar as componentes do campo por um metodo de integracao  
 """
 
 import Functions as fun
@@ -67,14 +68,14 @@ def D_r(u, v, z):
 def N(u, v, z):
     return sqrt((D_r(u, v, z))**2 + (D_p(u, v, z))**2 + (D_q(u, v, z))**2)
 
-#Definicao dos componentes do campo  |SEPARADOS|
-def P(u, v, z):
+#Componentes do campo SEPARADOS
+def P(u, v, z): #Componente multiplo de i
     return D_p(u, v, z)/N(u, v, z)
 
-def Q(u, v, z):
+def Q(u, v, z): #Componente multiplo de j
     return D_q(u, v, z)/ N(u, v, z)
 
-def R(u, v, z):
+def R(u, v, z): #Componente multiplo de k
     return D_r(u, v, z)/N(u, v, z)
 
 #Componentes do campo JUNTOS
