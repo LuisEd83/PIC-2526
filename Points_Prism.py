@@ -22,7 +22,7 @@ N = 1000 #Numero de realizacao de passo
 #P = {0 ≤ u ≤ 1, 0 ≤ v ≤ 1, 0 ≤ u + v ≤ 1, 0 ≤ z ≤ 1}
 #Então:
 def if_PointInPrism(Point : list):
-    #Extraindo ponto
+    #Extraindo pontos
     u, v, z = Point
 
     #Relizando comparacao
@@ -33,8 +33,22 @@ def if_PointInPrism(Point : list):
 
 #Definindo uma funcao para concatenar os pontos para h > 0 e h < 0
 def Array_Concatenated(Point : list):
-    array_ph = ei.Euler_method(Point, [h, N])
-    array_mh = ei.Euler_method(Point, [-h, N])
+    array_ph = ei.Euler_method(Point, [h, N]) #Array dos pontos tal que h > 0
+    array_mh = ei.Euler_method(Point, [-h, N]) #Array dos pontos tal que h < 0
+
+    #Retirando o ponto inicial de array_mp
+    array_mh = np.delete(array_mh, Point)
 
     #Concatenando os arrays na ordem: h > 0 e h < 0
     return np.concatenate((array_ph, array_mh))
+
+#Definindo um filtro para armazenar os pontos que pertencam ao dominio do prisma:
+def Points_Filter(array : np.array):
+    #Definindo uma lista para armazenar os pontos ditos corretos
+    Array_pc = []
+
+    for i in range(2*N+1):
+        if(if_PointInPrism(array[i])):
+            Array_pc.append(array[i])
+    
+    return np.array(Array_pc, float)

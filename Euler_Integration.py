@@ -3,7 +3,7 @@ Modulo: Integracao pelo metodo de Euler
 
 Objetivo:
 - Utilizar o metodo de Euler para armazenar o conjunto de pontos que informam o comportamento
-dos campos a partir de um ponto escolhido.
+dos compoentes do campo a partir de um ponto inicial escolhido.
 """
 
 import Determinants_Functions as df
@@ -40,11 +40,11 @@ def Euler_method(point : list, integ_config : list):
         Array_z.append(zkp1)
 
         #Atualizo os valores das variaives uk, vk e zk de acorddo com o passo h 
-        uk += h
-        vk += h
-        zk += h
+        uk = ukp1
+        vk = vkp1
+        zk = zkp1
 
     #Definindo um array para armazenar pontos (com tamanho N + 1):
-    Array = array([Array_u, Array_v, Array_z])
+    Array = array([Array_u, Array_v, Array_z], float)
 
     return Array

@@ -16,10 +16,10 @@ import Inicia as ini
 #mapeia para baricentrica ou não
 mp = ini.baricentrica()
 
-# Define as concentracoes minima e maxima
+#Define as concentracoes minima e maxima
 cmin, cmax = ini.concentrations() 
 
-# Para a figura tridimensional
+#Para a figura tridimensional
 ax = ini.ambiente3d()
 ax.view_init(elev=30., azim=-130.) #Initial Camera Position
 #ax.axis('off')
