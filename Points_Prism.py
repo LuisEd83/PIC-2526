@@ -18,20 +18,34 @@ import matplotlib.pyplot as plt
 
 #Definindo constantes:
 h = 0.01 #Passo do metodo de Euler
-N = 1000 #Numero de realizacao de passo
+N = 500 #Numero de realizacao de passo
+
+sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
 U0 = [0.5, 0.2, 0.1]
 
-#Como o prisma é definido por:
-#P = {0 ≤ u ≤ 1, 0 ≤ v ≤ 1, 0 ≤ u + v ≤ 1, 0 ≤ z ≤ 1}
+#Como está sendo utilizado o diagrama ternario
 #Então:
 def if_PointInPrism(Point : list):
     #Extraindo pontos
     u, v, z = Point
 
+    #______USANDO O TEOREMA DE VIVIANI______#
+
+    #Definindo ponto no plano do triangulo
+    Point_plano = np.array((u, v, 0.0))
+
+    #Definindo as distancias entre o ponto P e as laterais do triangulo equilatero
+    h1 = np.abs(v)
+    h2 = (np.abs(-sqr3 * u + v))/2
+    h3 = (np.abs(sqr3 * u + v - sqr3))/2
+
+    #Altura total
+    h = sqr3/2
+
     #Relizando comparacao
-    if((0.0 <= u <= 1.0) and (0.0 <= v <= 1.0) and (0.0 <= u + v <= 1.0) and (0.0 <= z <= 1.0)):
+    if((h1 + h2 + h3 - h < 1e-2) and (0.0 <= z <= 1.0)):
         return 1
     
     return 0
@@ -43,9 +57,6 @@ def Array_Concatenated(Point : list):
 
     #Retirando o ponto inicial de array_mp
     array_mh = array_mh[~np.all(array_mh == Point, axis = 1)]
-    
-    print(f"PH shape: {array_ph.shape}")
-    print(f"MH shape: {array_mh.shape}")
 
     #Concatenando os arrays na ordem: h > 0 e h < 0
     return np.concatenate((array_ph, array_mh))
