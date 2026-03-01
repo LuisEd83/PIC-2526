@@ -24,6 +24,7 @@ sqr3 = np.sqrt(3)
 
 #Definindo o ponto inicial para teste
 U0 = [0.5, 0.2, 0.1]
+U1 = [0.6, 0.1, 0.3]
 
 #Como está sendo utilizado o diagrama ternario
 #Então:
@@ -73,7 +74,7 @@ def Points_Filter(array):
     return np.array(Array_pc, float)
 
 #Definindo a funcao principal de plot
-def Prism_plot(U0 : list):
+def Prism_plot(U0 : list, U1 : list):
     #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
 
     #mapeia para baricentrica ou não
@@ -118,15 +119,26 @@ def Prism_plot(U0 : list):
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA__________#
     
+
+    #__________CURVA 1__________#
     #Colecao de pontos dentro do prisma:
-    points_concatened = Array_Concatenated(U0) #Extrai todos os pontos
-    array_points = Points_Filter(points_concatened) #Filtra os pontos
+    points_concatened_C1 = Array_Concatenated(U0) #Extrai todos os pontos
+    array_points_c1 = Points_Filter(points_concatened_C1) #Filtra os pontos
 
     #plot dos pontos
-    for i in range(len(array_points)):
-        ax.plot(*array_points[i], marker = ".", linestyle = "-", color = "b")
+    for i in range(len(array_points_c1)):
+        ax.plot(*array_points_c1[i], marker = ".", linestyle = "-", color = "b")
+
+    #__________CURVA 2__________#
+    #Colecao de pontos dentro do prisma:
+    points_concatened_C2 = Array_Concatenated(U1) #Extrai todos os pontos
+    array_points_c2 = Points_Filter(points_concatened_C2) #Filtra os pontos
+
+    #plot dos pontos
+    for i in range(len(array_points_c2)):
+        ax.plot(*array_points_c2[i], marker = ".", linestyle = "-", color = "r")
 
     #Inicia plotagem
     plt.show()
 
-Prism_plot(U0)
+Prism_plot(U0, U1)
