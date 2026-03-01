@@ -16,16 +16,14 @@ def Euler_method(point : list, integ_config : list):
 
     #Extraindo configuracao de integracao
     h, N = integ_config
-
-    #Definindo arrays (listas) que vao armazenar os resultados e inicializando com os valores iniciais
-    Array_u = [u0]
-    Array_v = [v0]
-    Array_z = [z0]
     
     #Inicializando variaveis para o metodo de Euler
     uk = u0
     vk = v0
     zk = z0
+
+    #Inicializando uma lista de pontos:
+    Points = [[u0, v0, z0]]
 
     #Calculando e armazenando os resultados do metodo de Euler:
     for _ in range(N): #O laco vai repetir N vezes
@@ -34,10 +32,8 @@ def Euler_method(point : list, integ_config : list):
         vkp1 = vk + h * df.Q(uk, vk, zk)
         zkp1 = zk + h * df.R(uk, vk, zk)
 
-        #Armazeno os valores em seus respectivos arrays
-        Array_u.append(ukp1)
-        Array_v.append(vkp1)
-        Array_z.append(zkp1)
+        #Armazenando os valores na lista de pontos
+        Points.append([ukp1, vkp1, zkp1])
 
         #Atualizo os valores das variaives uk, vk e zk de acorddo com o passo h 
         uk = ukp1
@@ -45,6 +41,6 @@ def Euler_method(point : list, integ_config : list):
         zk = zkp1
 
     #Definindo um array para armazenar pontos (com tamanho N + 1):
-    Array = array([Array_u, Array_v, Array_z], float)
+    Points = array(Points, float)
 
-    return Array
+    return Points

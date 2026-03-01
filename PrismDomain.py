@@ -13,6 +13,8 @@ Ou deverao ser feitas adaptacoes com uma variavel booleana (laptop ou desktop)
 import Functions as fun
 import Inicia as ini
 
+#Testando se é possível transformar isto em uma funcao
+
 #mapeia para baricentrica ou não
 mp = ini.baricentrica()
 
@@ -54,4 +56,4 @@ ax.set_xlabel('$u$')
 ax.set_ylabel('$v$')
 ax.set_zlabel('$z$')
 
-ini.plt.show() #Sem isso o prisma nao e plotado
+ini.plt.show() #Sem isso o prisma nao eh plotado
