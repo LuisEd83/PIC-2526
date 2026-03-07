@@ -92,7 +92,3 @@ def R(u, v, z, alpha): #Componente multiplo de k
 #Componentes do campo JUNTOS
 def campos(u, v, z):
     return P(u, v, z), Q(u, v, z), R(u, v, z)
-
-#///////////////////////////////////////////////////////////#
-#Os campos seguintes possuem lbdc com alpha != 0
-#///////////////////////////////////////////////////////////#
