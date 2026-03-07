@@ -9,7 +9,7 @@ Objetivos:
 
 #Bibliotecas  
 import Euler_Integration as ei
-import Determinants_Functions as df
+import Campo_Ez as df
 import Inicia as ini
 import Functions as fun
 
@@ -19,23 +19,21 @@ import matplotlib.pyplot as plt
 #Definindo constantes:
 h = 0.01 #Passo do metodo de Euler
 N = 500 #Numero de realizacao de passo
+alpha = 0.1 #Variável de controle
 
 sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
-U0 = [0.5, 0.2, 0.1]
-U1 = [0.6, 0.1, 0.3]
+U0 = [0.3, 0.2, 0.1]
+U1 = [0.3, 0.25, 0.3]
 
 #Como está sendo utilizado o diagrama ternario
 #Então:
-def if_PointInPrism(Point : list):
+def if_PointInPrism(Point : list): #Retorna 1 se verdadeiro
     #Extraindo pontos
     u, v, z = Point
 
     #______USANDO O TEOREMA DE VIVIANI______#
-
-    #Definindo ponto no plano do triangulo
-    Point_plano = np.array((u, v, 0.0))
 
     #Definindo as distancias entre o ponto P e as laterais do triangulo equilatero
     h1 = np.abs(v)
@@ -53,8 +51,8 @@ def if_PointInPrism(Point : list):
 
 #Definindo uma funcao para concatenar os pontos para h > 0 e h < 0
 def Array_Concatenated(Point : list):
-    array_ph = ei.Euler_method(Point, [h, N]) #Array dos pontos tal que h > 0
-    array_mh = ei.Euler_method(Point, [-h, N]) #Array dos pontos tal que h < 0
+    array_ph = ei.Euler_method(Point, [h, N, alpha]) #Array dos pontos tal que h > 0
+    array_mh = ei.Euler_method(Point, [-h, N, alpha]) #Array dos pontos tal que h < 0
 
     #Retirando o ponto inicial de array_mp
     array_mh = array_mh[~np.all(array_mh == Point, axis = 1)]
@@ -74,7 +72,7 @@ def Points_Filter(array):
     return np.array(Array_pc, float)
 
 #Definindo a funcao principal de plot
-def Prism_plot(U0 : list, U1 : list):
+def Prism_plot(U0 : list):
     #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
 
     #mapeia para baricentrica ou não
@@ -118,27 +116,17 @@ def Prism_plot(U0 : list, U1 : list):
     ax.set_zlabel('$z$')
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA__________#
-    
 
-    #__________CURVA 1__________#
     #Colecao de pontos dentro do prisma:
-    points_concatened_C1 = Array_Concatenated(U0) #Extrai todos os pontos
-    array_points_c1 = Points_Filter(points_concatened_C1) #Filtra os pontos
+    points_concatened_C = Array_Concatenated(U0) #Extrai todos os pontos
+    array_points_c = Points_Filter(points_concatened_C) #Filtra os pontos
+
 
     #plot dos pontos
-    for i in range(len(array_points_c1)):
-        ax.plot(*array_points_c1[i], marker = ".", linestyle = "-", color = "b")
-
-    #__________CURVA 2__________#
-    #Colecao de pontos dentro do prisma:
-    points_concatened_C2 = Array_Concatenated(U1) #Extrai todos os pontos
-    array_points_c2 = Points_Filter(points_concatened_C2) #Filtra os pontos
-
-    #plot dos pontos
-    for i in range(len(array_points_c2)):
-        ax.plot(*array_points_c2[i], marker = ".", linestyle = "-", color = "r")
+    for i in range(len(array_points_c)):
+        ax.plot(*array_points_c[i], 'b.-')
 
     #Inicia plotagem
     plt.show()
 
-Prism_plot(U0, U1)
+Prism_plot(U1)

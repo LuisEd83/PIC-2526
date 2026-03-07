@@ -11,10 +11,21 @@ Com isto concluido, poderemos passar para proxima etapa: integrar as componentes
 """
 
 import Functions as fun
-from numpy import sqrt
+from numpy import sqrt, cos
+
+################################################
+#Primeiramente, deve-se definir uma funcao para lbdc (vah para o 
+#arquivo Functions.py) para um alpha qualquer
+################################################
+
+def az(z): #Da/dz
+    return cos(z) #Derivada de a(z) em relacao a z
+
+def lambdz(u, v, z, alpha):
+    return(fun.fw(u, v, z)/(u + alpha*az(z)))
 
 #Definicao da funcao Dp
-def D_p(u, v, z):
+def D_p(u, v, z, alpha):
     #Variaveis da multiplicacao da diagonal principal da matriz jacobiana 2x2
     fwv = fun.fwv(u, v, z)
     goz = fun.foc(u, v, z)
@@ -22,7 +33,7 @@ def D_p(u, v, z):
     #Variaveis da multiplicacao da diagonal secundaria da matriz jacobiana 2x2
     gov = fun.fov(u, v, z)
     fwz = fun.fwc(u, v, z)
-    lbdz = fun.lbdc(u, v, z)
+    lbdz = lambdz(u, v, z, alpha)
 
     #Diagonais da matriz jacobiana
     Diag_p = fwv*goz
@@ -31,14 +42,14 @@ def D_p(u, v, z):
     return Diag_p - Diag_s
 
 #Definicao da funcao Dq
-def D_q(u, v, z):
+def D_q(u, v, z, alpha):
     #Variaveis da multiplicacao da diagonal principal da matriz jacobiana 2x2
     fwz = fun.fwc(u, v, z)
     gou = fun.fou(u, v, z)
 
     #Variaveis da multiplicacao da diagonal secundaria da matriz jacobiana 2x2
     fwu = fun.fwu(u, v, z)
-    lbdz = fun.lbdc(u, v, z)
+    lbdz = lambdz(u, v, z, alpha)
     goz = fun.foc(u, v, z)
 
     #Diagonais da matriz jacobiana
@@ -48,11 +59,11 @@ def D_q(u, v, z):
     return Diag_p - Diag_s
 
 #Definicao da funcao Dr
-def D_r(u, v, z):
+def D_r(u, v, z, alpha):
     #Variaveis da multiplicacao da diagonal principal da matriz jacobiana 2x2
     fwu = fun.fwu(u, v, z)
     gov = fun.fov(u, v, z)
-    lbdz = fun.lbdc(u, v, z)
+    lbdz = lambdz(u, v, z, alpha)
     
     #Variaveis da multiplicacao da diagonal secundaria da matriz jacobiana 2x2
     fwv = fun.fwv(u, v, z)
@@ -65,19 +76,23 @@ def D_r(u, v, z):
     return Diag_p - Diag_s
 
 #Definicao da funcao norma N
-def N(u, v, z):
-    return sqrt((D_r(u, v, z))**2 + (D_p(u, v, z))**2 + (D_q(u, v, z))**2)
+def N(u, v, z, alpha):
+    return sqrt((D_r(u, v, z, alpha))**2 + (D_p(u, v, z, alpha))**2 + (D_q(u, v, z, alpha))**2)
 
 #Componentes do campo SEPARADOS
-def P(u, v, z): #Componente multiplo de i
-    return D_p(u, v, z)/N(u, v, z)
+def P(u, v, z, alpha): #Componente multiplo de i
+    return D_p(u, v, z, alpha)/N(u, v, z, alpha)
 
-def Q(u, v, z): #Componente multiplo de j
-    return D_q(u, v, z)/ N(u, v, z)
+def Q(u, v, z, alpha): #Componente multiplo de j
+    return D_q(u, v, z, alpha)/ N(u, v, z, alpha)
 
-def R(u, v, z): #Componente multiplo de k
-    return D_r(u, v, z)/N(u, v, z)
+def R(u, v, z, alpha): #Componente multiplo de k
+    return D_r(u, v, z, alpha)/N(u, v, z, alpha)
 
 #Componentes do campo JUNTOS
 def campos(u, v, z):
     return P(u, v, z), Q(u, v, z), R(u, v, z)
+
+#///////////////////////////////////////////////////////////#
+#Os campos seguintes possuem lbdc com alpha != 0
+#///////////////////////////////////////////////////////////#

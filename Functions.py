@@ -136,7 +136,8 @@ def fgc(u,v,c): #dfg/dv
     return (-w**2/mug*Dc(u,v,c))/(D(u,v,c)**2)
 
 ################################################
-# Autovalor contato lambdac
+# Autovalor contato lambdac 
+#(Alpha == 0)
 def lbdc(u,v,c): #lambdac = fw/sw
     return (u/muw(c))/D(u,v,c) # fw(u,v,c)/u
 

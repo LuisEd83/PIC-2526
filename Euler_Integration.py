@@ -6,8 +6,14 @@ Objetivo:
 dos compoentes do campo a partir de um ponto inicial escolhido.
 """
 
-import Determinants_Functions as df
+import Campo_Ez as df
 from numpy import array 
+
+"""
+Retornar Branches (dois ou três)
+
+"""
+
 
 #Definindo uma funcao que implementa o metodo de Euler para integracao
 def Euler_method(point : list, integ_config : list):
@@ -15,7 +21,7 @@ def Euler_method(point : list, integ_config : list):
     u0, v0, z0 = point
 
     #Extraindo configuracao de integracao
-    h, N = integ_config
+    h, N, alpha = integ_config
     
     #Inicializando variaveis para o metodo de Euler
     uk = u0
@@ -28,9 +34,9 @@ def Euler_method(point : list, integ_config : list):
     #Calculando e armazenando os resultados do metodo de Euler:
     for _ in range(N): #O laco vai repetir N vezes
         #Realizo o passo (obs: kp1 = k + 1)
-        ukp1 = uk + h * df.P(uk, vk, zk)
-        vkp1 = vk + h * df.Q(uk, vk, zk)
-        zkp1 = zk + h * df.R(uk, vk, zk)
+        ukp1 = uk + h * df.P(uk, vk, zk, alpha)
+        vkp1 = vk + h * df.Q(uk, vk, zk, alpha)
+        zkp1 = zk + h * df.R(uk, vk, zk, alpha)
 
         #Armazenando os valores na lista de pontos
         Points.append([ukp1, vkp1, zkp1])
