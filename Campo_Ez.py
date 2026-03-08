@@ -11,15 +11,12 @@ Com isto concluido, poderemos passar para proxima etapa: integrar as componentes
 """
 
 import Functions as fun
+
 from numpy import sqrt, cos
 
-################################################
-#Primeiramente, deve-se definir uma funcao para lbdc (vah para o 
-#arquivo Functions.py) para um alpha qualquer
-################################################
-
-def az(z): #Da/dz
-    return cos(z) #Derivada de a(z) em relacao a z
+#Redefinindo funcoes para nao haver erro circular
+def az(z):
+    return cos(z)
 
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))

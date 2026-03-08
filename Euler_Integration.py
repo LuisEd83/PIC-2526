@@ -11,17 +11,20 @@ from numpy import array
 
 """
 Retornar Branches (dois ou três)
-
+Criar uma figura contendo um gráfico com 3 informações evoluindo com o tempo: 
+- LambdaS
+- LambdaF
+- LambdaZ
 """
 
 
 #Definindo uma funcao que implementa o metodo de Euler para integracao
-def Euler_method(point : list, integ_config : list):
+def Euler_method(alpha, point : list, integ_config : list):
     #Extraindo ponto inicial
     u0, v0, z0 = point
 
     #Extraindo configuracao de integracao
-    h, N, alpha = integ_config
+    h, N = integ_config
     
     #Inicializando variaveis para o metodo de Euler
     uk = u0
