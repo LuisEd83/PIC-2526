@@ -24,6 +24,28 @@ def Branches(alpha, Point : list, integ_config : list):
     #Definindo escolha (baricentrica):
     mp = baricentrica
 
+    #Constante:
+    sqr3 = np.sqrt(3)
+    def pointInT(Point, bar):
+        #Extraindo pontos
+        u, v, = Point
+
+        if(bar):
+            #Teorema de Viviani
+            h1 = np.abs(v)
+            h2 = (np.abs(-sqr3 * u + v))/2
+            h3 = (np.abs(sqr3 * u + v - sqr3))/2
+
+            h = sqr3/2
+
+            if(h1 + h2 + h3 - h == 0):
+                return 1
+        else:
+            #Definicao de triangulo retangulo
+            if((0 <= u <= 1) and (0 <= v <= 1) and (0 <= u + v <= 1)):
+                return 1
+            
+        return 0
     
     """
     
@@ -43,17 +65,17 @@ def Branches(alpha, Point : list, integ_config : list):
     coluna_mh = array_mh[:, 2]
 
     #Criando uma variável para armazenar os pontos na ordem correta
-    org_points = np.array()
+    org_points = np.array([])
 
     #Variavel de controle de laco
     i = 0
 
     while(1):
         if(coluna_ph[0] - coluna_mh[i] > 0):
-            org_points = np.concatenate(array_mh + np.array(Point) + array_ph)
+            org_points = np.concatenate([array_mh, np.array(Point).reshape(1, -1), array_ph])
             break
         elif(coluna_ph[0] - coluna_mh[i] < 0):
-            org_points = np.concatenate(array_ph + np.array(Point) + array_mh)
+            org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
             break
         else:
             i += 1
@@ -68,11 +90,11 @@ def Branches(alpha, Point : list, integ_config : list):
     
     """
 
-    #Criando a variavel para armazenar os branches:
-    Branches = []
+    #Criando a variavel para armazenar as branches:
+    branches_list = []
 
     #Primeiro branch -> armazena os pontos do org_points que vem antes do Point
-    index_point = np.where(org_points == Point)[0]
+    index_point = np.where(np.all(org_points == Point, axis=1))[0][0]
 
     first_branch = org_points[:index_point + 1] #Copia parte do org_points
 
