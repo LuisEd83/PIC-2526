@@ -11,8 +11,16 @@ Os ramos devem:
 
 import Euler_Integration as ei
 from Inicia import baricentrica
+from Functions import fw, lbdas, lbdaf 
 
 import numpy as np
+
+#Redefinindo funcoes para nao haver erro circular
+def az(z):
+    return np.cos(z)
+
+def lambdz(u, v, z, alpha):
+    return(fw(u, v, z)/(u + alpha*az(z)))
 
 def Branches(alpha, Point : list, integ_config : list):
     #Definindo escolha (baricentrica):
@@ -136,3 +144,32 @@ def Branches(alpha, Point : list, integ_config : list):
     branches = np.array(branches_list)
 
     return branches
+
+#A funcao a seguir retorna um array em que cada elemento terah um valor do tipo
+# 1 - lambdaS => Azul
+# 2 - lambdaF => Vermelho
+# 3 - LambdaZ => Roxo
+# -1 - ERROR
+def Branches_colors(alpha, branches):
+    #Definindo lista que irah armazenar os numeros (1, 2 ou 3)
+    colors = []
+
+    for i in range(len(branches)):
+        #Extrai o ponto cenntral (da metade do ramo)
+        point = branches[i][len(branches[i])//2] #Divisão de inteiro
+
+        #Definindo valores e comparando:
+        lambdaS_value = lbdas(*point)
+        lambdaF_value = lbdaf(*point)
+        lambdaZ_value = lambdz(*point, alpha)
+
+        if((lambdaZ_value < lambdaF_value < lambdaS_value) or (lambdaZ_value < lambdaS_value < lambdaF_value)):
+            colors.append(1) #Adiciona a cor Azul
+        elif((lambdaS_value < lambdaZ_value < lambdaF_value) or (lambdaF_value < lambdaZ_value < lambdaS_value)):
+            colors.append(2) #Adiciona a cor Vermelha
+        elif((lambdaF_value < lambdaS_value < lambdaZ_value) or (lambdaS_value < lambdaF_value < lambdaZ_value)):
+            colors.append(3) #Adiciona a cor Roxa
+        else:
+            colors.append(-1)
+
+    return np.array(colors)
