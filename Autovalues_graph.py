@@ -10,10 +10,11 @@ Objetivo:
 - Extrair os pontos da curva dentro do prisma para encontrar todos os valores dos autovalores.
 
 """
-
-from Auxiliar_Functions import Array_Concatenated, Points_Filter, lambdz
+import Euler_Integration as ei
+from Auxiliar_Functions import lambdz
 from Inicia import baricentrica
 
+import numpy as np
 import matplotlib.pyplot as plot
 
 def lamb_graph(alpha, Point : list, integ_config : list):
@@ -25,7 +26,36 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     
     #Y-AXIS#
     #Colecao de pontos dentro do prisma:
-    array_points_c = Array_Concatenated(alpha, Point, integ_config) #Extrai todos os pontos
+    array_ph = ei.Euler_method(alpha, Point, integ_config) #Array com h > 0
+    array_mh = ei.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]]) #Array com h < 0
+
+    #Retirando o ponto inicial (Point):
+    array_ph = array_ph[~np.all(array_ph == Point, axis = 1)]
+    array_mh = array_mh[~np.all(array_mh == Point, axis = 1)]
+
+    #Extraindo as colunas destes arrays:
+    coluna_ph = array_ph[:, 2]
+    coluna_mh = array_mh[:, 2]
+
+    #Criando uma variável para armazenar os pontos na ordem correta
+    org_points = np.array([])
+
+    #Variavel de controle de laco
+    i = 0
+
+    while(1):
+        if(coluna_ph[0] - coluna_mh[i] > 0):
+            org_points = np.concatenate([array_mh, np.array(Point).reshape(1, -1), array_ph])
+            break
+        elif(coluna_ph[0] - coluna_mh[i] < 0):
+            org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
+            break
+        else:
+            i += 1
+
+        if(i == len(coluna_mh)):
+            print("[ERROR] - Impossibilidade de determinar ordem")
+            exit()
     
     #Inicializando vetores dos lambdas
     array_LambS = []
@@ -33,10 +63,10 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     array_LambZ = []
 
     #Armazenando todos os valores dos lambdas:
-    for i in range(len(array_points_c)):
-        array_LambS.append(fun.lbdas(*array_points_c[i]))
-        array_LambF.append(fun.lbdaf(*array_points_c[i]))
-        array_LambZ.append(lambdz(*array_points_c[i], alpha))
+    for i in range(len(org_points)):
+        array_LambS.append(fun.lbdas(*org_points[i]))
+        array_LambF.append(fun.lbdaf(*org_points[i]))
+        array_LambZ.append(lambdz(*org_points[i], alpha))
     
     #X-AXIS#
     #Inicializando lista
@@ -59,4 +89,4 @@ def lamb_graph(alpha, Point : list, integ_config : list):
 
     plot.show()
 
-lamb_graph(0.3, [0.5, 0.15, 0.1], [0.01, 500])
+lamb_graph(0.1, [0.5, 0.45, 0.1], [0.01, 500])

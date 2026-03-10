@@ -10,6 +10,7 @@ Objetivos:
 #Bibliotecas
 import Auxiliar_Functions as af
 import Functions as fun
+import _Branches as b
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,7 +18,7 @@ import matplotlib.pyplot as plt
 #Definindo constantes:
 h = 0.01 #Passo do metodo de Euler
 N = 1000 #Numero de realizacao de passo
-alpha = 0.5 #Variável de controle
+alpha = 0 #Variável de controle
 
 sqr3 = np.sqrt(3) 
 
@@ -73,14 +74,16 @@ def Prism_plot(Point : list):
     ax.set_zlabel('$z$')
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA__________#
+    
+    branches = b.Branches(alpha, Point, [h, N])
+    colors = b.Branches_colors(alpha, branches)
 
-    #Colecao de pontos dentro do prisma:
-    points_concatened_C = af.Array_Concatenated(alpha, Point, [h, N]) #Extrai todos os pontos
-    array_points_c = af.Points_Filter(points_concatened_C, mp, N) #Filtra os pontos
-
-    #plot dos pontos
-    for i in range(len(array_points_c)):
-        ax.plot(*array_points_c[i], 'b.-')
+    for i in range(len(branches)):
+        ax.plot(branches[i][:, 0],
+                branches[i][:, 1],
+                branches[i][:, 2],
+                color = colors[i],
+                linestyle = '-')
 
     #Inicia plotagem
     plt.show()
