@@ -15,22 +15,16 @@ from Inicia import baricentrica
 import numpy as np
 
 def Branches(alpha, Point : list, integ_config : list):
-    #Extraindo os pontos:
-    u, v, z = Point
-
-    #Extraindo configuracao:
-    h, N = integ_config
-
     #Definindo escolha (baricentrica):
     mp = baricentrica
 
     #Constante:
     sqr3 = np.sqrt(3)
-    def pointInT(Point, bar):
+    def pointInT(Point):
         #Extraindo pontos
-        u, v, = Point
+        u, v, z = Point
 
-        if(bar):
+        if(mp):
             #Teorema de Viviani
             h1 = np.abs(v)
             h2 = (np.abs(-sqr3 * u + v))/2
@@ -38,15 +32,43 @@ def Branches(alpha, Point : list, integ_config : list):
 
             h = sqr3/2
 
-            if(h1 + h2 + h3 - h == 0):
+            if((h1 + h2 + h3 - h == 0) and (0.0 <= z <= 1.0)):
                 return 1
         else:
             #Definicao de triangulo retangulo
-            if((0 <= u <= 1) and (0 <= v <= 1) and (0 <= u + v <= 1)):
+            if((0.0 <= u <= 1) and (0.0 <= v <= 1) and (0.0 <= u + v <= 1) and (0.0 <= z <= 1.0)):
                 return 1
             
         return 0
     
+    def indexs(array_org, lista_index : list, bool_value : bool, current_size, correc_error):
+        #Condicao de parada
+        if(current_size <= 0):
+            return -1
+
+        #Criando array para armazenar parte da lista
+        array_temp = np.array([])
+
+        if(bool_value):
+            for i in range(len(array_org)): #Para percorrer todo o array de pontos.
+                if(pointInT(*array_org[i]) == 0):
+                    bool_value = False                                                               #Inverte o valor do bool_value
+                    lista_index.append(correc_error + i)                                             #Armazena o index que ocorreu o if e soma com o erro (advindo da recursividade)
+                    correc_error += (i+1)                                                            #Adiciona o erro atual com o antigo
+                    current_size -= (i+1)                                                            #Retiro parte do tamanho do array
+                    array_temp = array_org[i+1:].copy()                                              #Cria uma copia do array a partir de um indice i
+                    return indexs(array_temp, lista_index, bool_value, current_size, correc_error)   #Chama a funcao novamente
+        else:
+            for i in range(len(array_org)):
+                if(pointInT(*array_org[i]) == 1):
+                    bool_value = True
+                    lista_index.append(correc_error + i)
+                    correc_error += (i+1)
+                    current_size -= (i+1)
+                    array_temp = array_org[i+1:].copy()
+                    return indexs(array_temp, lista_index, bool_value, current_size, correc_error)
+
+
     """
     
     #ORGANIZAÇÃO DOS PONTOS
@@ -90,13 +112,27 @@ def Branches(alpha, Point : list, integ_config : list):
     
     """
 
+    #Criando a variaveis chamar funcao:
+    points_indexs = []              #Armazenamento de indices
+    bool_value = False              #Variavel booleana para controle
+    size_array = len(org_points)    #Variavel para armazenar tamanho do array dos pontos organizados
+    
+    if(pointInT(*org_points[0])): #Determina valor booleano para funcao
+        bool_value = True
+    
+    #Retorna os indices onde ocorre a transicao de "dentro do prisma" para "fora do prisma" e vice-versa
+    indexs(org_points, points_indexs, bool_value, size_array, correc_error = 0)
+
     #Criando a variavel para armazenar as branches:
     branches_list = []
 
-    #Primeiro branch -> armazena os pontos do org_points que vem antes do Point
-    index_point = np.where(np.all(org_points == Point, axis=1))[0][0]
+    #variavel para armazenar o inicio da posicao:
+    p = 0
+    for i in range(len(points_indexs)):
+        branches_list.append([org_points[p : points_indexs[i]]])
+        p = points_indexs[i]
 
-    first_branch = org_points[:index_point + 1] #Copia parte do org_points
+    branches_list.append(org_points[p:])    #Adicionando o ultimo segmento
+    branches = np.array(branches_list)
 
-    #Selecionando o index que contem maior valor de z
-    #indexHZ = points_concatened_C[:, 2].argmax()
+    return branches
