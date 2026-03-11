@@ -172,10 +172,28 @@ def Branches(alpha, Point : list, integ_config : list):
             branches_list.pop(bi - 1)
             branches_list.insert(bi - 1, parte2)
             branches_list.insert(bi - 1, parte1)
+    else:
+        #Encontra o maior valor Z entre todas as branches e qual branch pertence
+        max_values = []
+        for i, branch in enumerate(branches_list):
+            current_max = np.max(branch[:, 2])                      #Valor máximo Z da branch
+            max_values.append([i, current_max])                     #Armazena [índice da branch, valor máximo]
 
-    for i, branch in enumerate(branches_list):
-        print(f"Branch {i}: {branches_list[i]}\n")
+        #Encontra qual branch tem o maior valor Z
+        max_values = np.array(max_values)
+        bi_max = int(max_values[np.argmax(max_values[:, 1])][0])    #índice da branch com maior Z
 
+        #Divide essa branch em duas partes
+        branch_max = branches_list[bi_max]
+        index_maxValue = np.argmax(branch_max[:, 2])                #Indice do ponto máximo dentro da branch
+
+        parte1 = branch_max[:index_maxValue + 1]                    #inicio até o máximo
+        parte2 = branch_max[index_maxValue:]                        #MAximo até o fim
+
+        #Substitui a branch pelo split
+        branches_list.pop(bi_max)
+        branches_list.insert(bi_max, parte2)
+        branches_list.insert(bi_max, parte1)
 
     return branches_list #retorna como lista, para melhor eficiencia
 
