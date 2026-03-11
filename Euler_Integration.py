@@ -9,15 +9,6 @@ dos compoentes do campo a partir de um ponto inicial escolhido.
 import Campo_Ez as df
 from numpy import array 
 
-"""
-Retornar Branches (dois ou três)
-Criar uma figura contendo um gráfico com 3 informações evoluindo com o tempo: 
-- LambdaS
-- LambdaF
-- LambdaZ
-"""
-
-
 #Definindo uma funcao que implementa o metodo de Euler para integracao
 def Euler_method(alpha, point : list, integ_config : list):
     #Extraindo ponto inicial

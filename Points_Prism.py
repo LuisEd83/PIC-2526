@@ -8,7 +8,6 @@ Objetivos:
 """
 
 #Bibliotecas
-import Auxiliar_Functions as af
 import Functions as fun
 import _Branches as b
 
@@ -18,13 +17,13 @@ import matplotlib.pyplot as plt
 #Definindo constantes:
 h = 0.01 #Passo do metodo de Euler
 N = 1000 #Numero de realizacao de passo
-alpha = 0 #Variável de controle
+alpha = 0.2 #Variável de controle
 
 sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
 U0 = [0.3, 0.2, 0.1]
-U1 = [0.3, 0.5, 0.3]
+U1 = [0.5, 0.5, 0.3]
 
 #Definindo a funcao principal de plot
 def Prism_plot(Point : list):
@@ -84,6 +83,9 @@ def Prism_plot(Point : list):
                 branches[i][:, 2],
                 color = colors[i],
                 linestyle = '-')
+
+    #Plotando o ponto inicial
+    ax.plot(*Point, 'ko')
 
     #Inicia plotagem
     plt.show()

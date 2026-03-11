@@ -34,7 +34,7 @@ def Branches(alpha, Point : list, integ_config : list):
 
             h = sqr3/2
 
-            if((h1 + h2 + h3 - h == 0) and (0.0 <= z <= 1.0)):
+            if((np.isclose(h1 + h2 + h3, h)) and (0.0 <= z <= 1.0)):
                 return 1
         else:
             #Definicao de triangulo retangulo
@@ -51,24 +51,14 @@ def Branches(alpha, Point : list, integ_config : list):
         #Criando array para armazenar parte da lista
         array_temp = np.array([])
 
-        if(bool_value):
-            for i in range(len(array_org)): #Para percorrer todo o array de pontos.
-                if(pointInT(array_org[i]) == 0):
-                    bool_value = False                                                               #Inverte o valor do bool_value
-                    lista_index.append(correc_error + i)                                             #Armazena o index que ocorreu o if e soma com o erro (advindo da recursividade)
-                    correc_error += (i+1)                                                            #Adiciona o erro atual com o antigo
-                    current_size -= (i+1)                                                            #Retiro parte do tamanho do array
-                    array_temp = array_org[i+1:].copy()                                              #Cria uma copia do array a partir de um indice i
-                    return indexs(array_temp, lista_index, bool_value, current_size, correc_error)   #Chama a funcao novamente
-        else:
-            for i in range(len(array_org)):
-                if(pointInT(array_org[i]) == 1):
-                    bool_value = True
-                    lista_index.append(correc_error + i)
-                    correc_error += (i+1)
-                    current_size -= (i+1)
-                    array_temp = array_org[i+1:].copy()
-                    return indexs(array_temp, lista_index, bool_value, current_size, correc_error)
+        for i in range(len(array_org)):
+            if(pointInT(array_org[i]) == int(not bool_value)):
+                bool_value = not bool_value                                                      #Inverte o valor do bool_value
+                lista_index.append(correc_error + i)                                             #Armazena o index que ocorreu o if e soma com o erro (advindo da recursividade)
+                correc_error += (i+1)                                                            #Adiciona o erro atual com o antigo
+                current_size -= (i+1)                                                            #Retiro parte do tamanho do array
+                array_temp = array_org[i+1:].copy()                                              #Cria uma copia do array a partir de um indice i
+                return indexs(array_temp, lista_index, bool_value, current_size, correc_error)
 
 
     """
@@ -77,8 +67,8 @@ def Branches(alpha, Point : list, integ_config : list):
     
     """
 
-    array_ph = ei.Euler_method(alpha, Point, integ_config) #Array com h > 0
-    array_mh = ei.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]]) #Array com h < 0
+    array_ph = ei.Euler_method(alpha, Point, integ_config)                          #Array com h > 0
+    array_mh = ei.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]])   #Array com h < 0
 
     #Retirando o ponto inicial (Point):
     array_ph = array_ph[~np.all(array_ph == Point, axis = 1)]
@@ -119,8 +109,8 @@ def Branches(alpha, Point : list, integ_config : list):
     bool_value = False              #Variavel booleana para controle
     size_array = len(org_points)    #Variavel para armazenar tamanho do array dos pontos organizados
     
-    if(pointInT(org_points[0])): #Determina valor booleano para funcao
-        bool_value = True
+    if(pointInT(org_points[0])):    #Determina valor booleano para funcao
+        bool_value = not bool_value
     
     #Retorna os indices onde ocorre a transicao de "dentro do prisma" para "fora do prisma" e vice-versa
     indexs(org_points, points_indexs, bool_value, size_array, correc_error = 0)
@@ -129,17 +119,18 @@ def Branches(alpha, Point : list, integ_config : list):
     branches_list = []
 
     #Inicializando variaveis para loop:
-    p = 0                            #Variavel de posicao
-    inside = pointInT(org_points[0]) #Variavel de controle
+    p = 0                                       #Variavel de posicao
+    inside = bool(pointInT(org_points[0]))      #Variavel de controle
 
     for i in range(len(points_indexs)):
         if(inside):
-            branches_list.append(org_points[p : points_indexs[i]])
+            branches_list.append(org_points[p : points_indexs[i] + 1])
         
         p = points_indexs[i]
         inside = not inside
 
-    branches_list.append(org_points[p:])    #Adicionando o ultimo segmento
+    if(inside):
+        branches_list.append(org_points[p:])    #Adicionando o ultimo segmento
 
     return branches_list #retorna como lista, para melhor eficiencia
 
