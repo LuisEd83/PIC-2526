@@ -10,6 +10,7 @@ Objetivos:
 #Bibliotecas
 import Functions as fun
 import _Branches as b
+import Auxiliar_Functions as af
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,13 +18,18 @@ import matplotlib.pyplot as plt
 #Definindo constantes:
 h = 0.01 #Passo do metodo de Euler
 N = 1000 #Numero de realizacao de passo
-alpha = 0.2 #Variável de controle
+alpha = 0 #Variável de controle
 
 sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
 U0 = [0.3, 0.2, 0.1]
-U1 = [0.5, 0.5, 0.3]
+U1 = [0.2, 0.3, 0.3]
+
+def if_pointIn(bar, Point : list):
+    if(bar):
+        return af.if_PointInEq(Point)
+    return af.if_PointInRet(Point)
 
 #Definindo a funcao principal de plot
 def Prism_plot(Point : list):

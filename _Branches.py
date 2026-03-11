@@ -119,18 +119,63 @@ def Branches(alpha, Point : list, integ_config : list):
     branches_list = []
 
     #Inicializando variaveis para loop:
-    p = 0                                       #Variavel de posicao
-    inside = bool(pointInT(org_points[0]))      #Variavel de controle
+    p = 0                                   #Variavel de posicao
+    inside = bool(pointInT(org_points[0]))  #Variavel de controle
 
     for i in range(len(points_indexs)):
         if(inside):
             branches_list.append(org_points[p : points_indexs[i] + 1])
-        
+
         p = points_indexs[i]
         inside = not inside
 
     if(inside):
         branches_list.append(org_points[p:])    #Adicionando o ultimo segmento
+
+    if(pointInT(Point)):
+        #Localizando a posição do ponto
+        position_Point = []
+        for i, branch in enumerate(branches_list):
+            for j, p in enumerate(branch):
+                if np.all(p == Point):
+                    position_Point.append([i, j]) #Retorna a branch (i) e a posicao na branch (j)
+
+        #Colocando o ponto inicial na branch anterior:
+        bi = position_Point[0][0] #Indice da branch atual
+        primeiro_ant  = branches_list[bi - 1][0]
+        branches_list[bi] = np.vstack([primeiro_ant, branches_list[bi]])
+
+        #Sabendo a branch que estah o ponto inicial
+        max_branch_ant = np.max(branches_list[bi - 1][:, 2])
+        max_branch_atu = np.max(branches_list[bi][:, 2])
+
+        branch_atual = branches_list[bi]
+        index_maxValue = np.argmax(branch_atual[:, 2])
+
+        if (max_branch_atu >= max_branch_ant):
+            parte1 = branch_atual[:index_maxValue + 1]   #Point -> máximo
+            parte2 = branch_atual[index_maxValue:]       #Maximo -> fim
+
+            #Substitui a branch atual pelas duas partes
+            branches_list.pop(bi)
+            branches_list.insert(bi, parte2)
+            branches_list.insert(bi, parte1)
+
+        else:
+            #Mesma lógica para a branch anterior
+            branch_ant = branches_list[bi - 1]
+            index_maxValue = np.argmax(branch_ant[:, 2])
+
+            parte1 = branch_ant[:index_maxValue + 1]
+            parte2 = branch_ant[index_maxValue:]
+
+            branches_list.pop(bi - 1)
+            branches_list.insert(bi - 1, parte2)
+            branches_list.insert(bi - 1, parte1)
+
+    for i, branch in enumerate(branches_list):
+        print(f"Branch {i}: {branches_list[i]}\n")
+
 
     return branches_list #retorna como lista, para melhor eficiencia
 
