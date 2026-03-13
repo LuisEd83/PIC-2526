@@ -11,6 +11,12 @@ import Functions as fun
 
 import numpy as np
 
+#Definindo funcao para determinar se o usuário quer ver ou nao os pontos dentro do prisma
+def transparencia():
+    x = 1 #x = 1 para ver apenas os pontos dentro do prisma; x = 0 e para ver todos os pontos
+    return x
+
+##############################################################
 #Derivada da funcao continua e crescente no intervalo [0,1]
 def az(z): #Da/dz
     return np.cos(z) #Derivada de a(z) em relacao a z

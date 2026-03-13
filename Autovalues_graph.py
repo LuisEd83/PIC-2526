@@ -12,7 +12,7 @@ Objetivo:
 """
 import Euler_Integration as ei
 from Auxiliar_Functions import lambdz
-from Inicia import baricentrica
+from _Branches import Branches
 
 import numpy as np
 import matplotlib.pyplot as plot
@@ -20,9 +20,6 @@ import matplotlib.pyplot as plot
 def lamb_graph(alpha, Point : list, integ_config : list):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import Functions as fun
-    
-    #mapeia para baricentrica ou não
-    mp = baricentrica()
     
     #Y-AXIS#
     #Colecao de pontos dentro do prisma:
@@ -45,9 +42,17 @@ def lamb_graph(alpha, Point : list, integ_config : list):
 
     while(1):
         if(coluna_ph[0] - coluna_mh[i] > 0):
+            #Inverte o array se o primeiro elemento do array_mh estiver mais proximo do Point
+            if(np.linalg.norm(array_mh[-1] - Point) > np.linalg.norm(array_mh[0] - Point)): 
+                array_mh = np.flip(array_mh, axis = 0) #Inverte apenas os elementos do array
+
             org_points = np.concatenate([array_mh, np.array(Point).reshape(1, -1), array_ph])
             break
         elif(coluna_ph[0] - coluna_mh[i] < 0):
+            #Inverte o array se o primeiro elemento do array_ph estiver mais proximo do Point
+            if(np.linalg.norm(array_ph[-1] - Point) > np.linalg.norm(array_ph[0] - Point)):
+                array_ph = np.flip(array_ph, axis = 0) #Inverte apenas os elementos do array
+
             org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
             break
         else:
@@ -78,6 +83,8 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     #Iniciando a figura
     plot.figure()
 
+    plot.plot()
+
     #Plotando pontos
     plot.plot(k, array_LambS, color = 'b', linestyle = '-', label = '\u03BBs')
     plot.plot(k, array_LambF, color = 'r', linestyle = '-', label = '\u03BBf')
@@ -89,4 +96,4 @@ def lamb_graph(alpha, Point : list, integ_config : list):
 
     plot.show()
 
-lamb_graph(0.1, [0.5, 0.45, 0.1], [0.01, 500])
+lamb_graph(0.04, [0.5, 0.45, 0.1], [0.01, 500])

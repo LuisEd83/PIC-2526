@@ -12,14 +12,27 @@ Os ramos devem:
 import Euler_Integration as ei
 from Inicia import baricentrica
 from Functions import fw, lbdas, lbdaf 
+from Auxiliar_Functions import transparencia
 
 import numpy as np
+
+"""
+1) Acertar a plotagem;
+2) Alpha pequeno (máx 0.1)
+3) Curva de Nível (lambdaS com lambdaZ e lambdaZ com lambdaF)
+ -> lambdaS com lambdaZ = azul
+ -> lambdaZ com lambdaF = vermelho
+"""
+
 
 #Redefinindo funcoes para nao haver erro circular
 def lambdz(u, v, z, alpha):
     return(fw(u, v, z)/(u + alpha*np.cos(z)))
 
 def Branches(alpha, Point : list, integ_config : list):
+    #Determinando se deverao passar todos os pontos ou nao
+    t = not transparencia()
+
     #Constante:
     sqr3 = np.sqrt(3)
     def pointInT(Point):
@@ -41,12 +54,12 @@ def Branches(alpha, Point : list, integ_config : list):
             if((0 <= u <= 1) and (0 <= v <= 1) and (0 <= u + v <= 1) and (0 <= z <= 1)):
                 return 1
             
-        return 0
+        return t #0 se transparencia == 1 e 1 se transparencia == 0
     
     def indexs(array_org, lista_index : list, bool_value : bool, current_size, correc_error):
         #Condicao de parada
         if(current_size <= 0):
-            return -1
+            return
 
         #Criando array para armazenar parte da lista
         array_temp = np.array([])
@@ -86,9 +99,17 @@ def Branches(alpha, Point : list, integ_config : list):
 
     while(1):
         if(coluna_ph[0] - coluna_mh[i] > 0):
+            #Inverte o array se o primeiro elemento do array_mh estiver mais proximo do Point
+            if(np.linalg.norm(array_mh[-1] - Point) > np.linalg.norm(array_mh[0] - Point)): 
+                array_mh = np.flip(array_mh, axis = 0) #Inverte apenas os elementos do array
+
             org_points = np.concatenate([array_mh, np.array(Point).reshape(1, -1), array_ph])
             break
         elif(coluna_ph[0] - coluna_mh[i] < 0):
+            #Inverte o array se o primeiro elemento do array_ph estiver mais proximo do Point
+            if(np.linalg.norm(array_ph[-1] - Point) > np.linalg.norm(array_ph[0] - Point)):
+                array_ph = np.flip(array_ph, axis = 0) 
+
             org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
             break
         else:
@@ -104,96 +125,106 @@ def Branches(alpha, Point : list, integ_config : list):
     
     """
 
-    #Criando a variaveis chamar funcao:
-    points_indexs = []              #Armazenamento de indices
-    bool_value = False              #Variavel booleana para controle
-    size_array = len(org_points)    #Variavel para armazenar tamanho do array dos pontos organizados
-    
-    if(pointInT(org_points[0])):    #Determina valor booleano para funcao
-        bool_value = not bool_value
-    
-    #Retorna os indices onde ocorre a transicao de "dentro do prisma" para "fora do prisma" e vice-versa
-    indexs(org_points, points_indexs, bool_value, size_array, correc_error = 0)
-
     #Criando a variavel para armazenar as branches:
     branches_list = []
+    
+    if(transparencia()): #Se
+        #Criando a variaveis chamar funcao:
+        points_indexs = []              #Armazenamento de indices
+        bool_value = False              #Variavel booleana para controle
+        size_array = len(org_points)    #Variavel para armazenar tamanho do array dos pontos organizados
+        
+        if(pointInT(org_points[0])):    #Determina valor booleano para funcao
+            bool_value = not bool_value
+        
+        #Retorna os indices onde ocorre a transicao de "dentro do prisma" para "fora do prisma" e vice-versa
+        indexs(org_points, points_indexs, bool_value, size_array, correc_error = 0)
 
-    #Inicializando variaveis para loop:
-    p = 0                                   #Variavel de posicao
-    inside = bool(pointInT(org_points[0]))  #Variavel de controle
+        #Inicializando variaveis para loop:
+        p = 0                                   #Variavel de posicao
+        inside = bool(pointInT(org_points[0]))  #Variavel de controle
 
-    for i in range(len(points_indexs)):
+        #Isso alterna a escolha dos pontos
+        for i in range(len(points_indexs)):
+            if(inside): #Se os pontos estiverem dentro do prisma, ele os seleciona
+                branches_list.append(org_points[p : points_indexs[i] + 1])
+
+            #Note que, se inside == False, ele apenas pula para o proximo indice, nao escolhendo os pontos que estao fora
+            p = points_indexs[i]
+            inside = not inside
+
         if(inside):
-            branches_list.append(org_points[p : points_indexs[i] + 1])
+            branches_list.append(org_points[p:])    #Adicionando o ultimo segmento se a ultima iteracao fizer Inside = True
 
-        p = points_indexs[i]
-        inside = not inside
+        if(pointInT(Point)):
+            #Localizando a posição do ponto
+            position_Point = []
+            for i, branch in enumerate(branches_list):
+                for j, p in enumerate(branch):
+                    if np.all(p == Point):
+                        position_Point.append([i, j]) #Retorna a branch (i) e a posicao na branch (j)
 
-    if(inside):
-        branches_list.append(org_points[p:])    #Adicionando o ultimo segmento
+            #Colocando o ponto inicial na branch anterior:
+            bi = position_Point[0][0] #Indice da branch atual
+            primeiro_ant  = branches_list[bi - 1][0]
+            branches_list[bi] = np.vstack([primeiro_ant, branches_list[bi]])
 
-    if(pointInT(Point)):
-        #Localizando a posição do ponto
-        position_Point = []
-        for i, branch in enumerate(branches_list):
-            for j, p in enumerate(branch):
-                if np.all(p == Point):
-                    position_Point.append([i, j]) #Retorna a branch (i) e a posicao na branch (j)
+            #Sabendo a branch que estah o ponto inicial
+            max_branch_ant = np.max(branches_list[bi - 1][:, 2])
+            max_branch_atu = np.max(branches_list[bi][:, 2])
 
-        #Colocando o ponto inicial na branch anterior:
-        bi = position_Point[0][0] #Indice da branch atual
-        primeiro_ant  = branches_list[bi - 1][0]
-        branches_list[bi] = np.vstack([primeiro_ant, branches_list[bi]])
+            branch_atual = branches_list[bi]
+            index_maxValue = np.argmax(branch_atual[:, 2])
 
-        #Sabendo a branch que estah o ponto inicial
-        max_branch_ant = np.max(branches_list[bi - 1][:, 2])
-        max_branch_atu = np.max(branches_list[bi][:, 2])
+            if (max_branch_atu >= max_branch_ant):
+                parte1 = branch_atual[:index_maxValue + 1]   #Point -> máximo
+                parte2 = branch_atual[index_maxValue:]       #Maximo -> fim
 
-        branch_atual = branches_list[bi]
-        index_maxValue = np.argmax(branch_atual[:, 2])
+                #Substitui a branch atual pelas duas partes
+                branches_list.pop(bi)
+                branches_list.insert(bi, parte2)
+                branches_list.insert(bi, parte1)
 
-        if (max_branch_atu >= max_branch_ant):
-            parte1 = branch_atual[:index_maxValue + 1]   #Point -> máximo
-            parte2 = branch_atual[index_maxValue:]       #Maximo -> fim
+            else:
+                #Mesma lógica para a branch anterior
+                branch_ant = branches_list[bi - 1]
+                index_maxValue = np.argmax(branch_ant[:, 2])
 
-            #Substitui a branch atual pelas duas partes
-            branches_list.pop(bi)
-            branches_list.insert(bi, parte2)
-            branches_list.insert(bi, parte1)
+                parte1 = branch_ant[:index_maxValue + 1]
+                parte2 = branch_ant[index_maxValue:]
 
+                branches_list.pop(bi - 1)
+                branches_list.insert(bi - 1, parte2)
+                branches_list.insert(bi - 1, parte1)
         else:
-            #Mesma lógica para a branch anterior
-            branch_ant = branches_list[bi - 1]
-            index_maxValue = np.argmax(branch_ant[:, 2])
+            #Encontra o maior valor Z entre todas as branches e qual branch pertence
+            max_values = []
+            for i, branch in enumerate(branches_list):
+                current_max = np.max(branch[:, 2])                      #Valor máximo Z da branch
+                max_values.append([i, current_max])                     #Armazena [índice da branch, valor máximo]
 
-            parte1 = branch_ant[:index_maxValue + 1]
-            parte2 = branch_ant[index_maxValue:]
+            #Encontra qual branch tem o maior valor Z
+            max_values = np.array(max_values)
+            bi_max = int(max_values[np.argmax(max_values[:, 1])][0])    #índice da branch com maior Z
 
-            branches_list.pop(bi - 1)
-            branches_list.insert(bi - 1, parte2)
-            branches_list.insert(bi - 1, parte1)
+            #Divide essa branch em duas partes
+            branch_max = branches_list[bi_max]
+            index_maxValue = np.argmax(branch_max[:, 2])                #Indice do ponto máximo dentro da branch
+
+            parte1 = branch_max[:index_maxValue + 1]                    #inicio até o máximo
+            parte2 = branch_max[index_maxValue:]                        #MAximo até o fim
+
+            #Substitui a branch pelo split
+            branches_list.pop(bi_max)
+            branches_list.insert(bi_max, parte2)
+            branches_list.insert(bi_max, parte1)
     else:
-        #Encontra o maior valor Z entre todas as branches e qual branch pertence
-        max_values = []
-        for i, branch in enumerate(branches_list):
-            current_max = np.max(branch[:, 2])                      #Valor máximo Z da branch
-            max_values.append([i, current_max])                     #Armazena [índice da branch, valor máximo]
+        #Transforma em um array numpy e recebe os pontos organizados
+        branches_list = np.array([org_points])
 
-        #Encontra qual branch tem o maior valor Z
-        max_values = np.array(max_values)
-        bi_max = int(max_values[np.argmax(max_values[:, 1])][0])    #índice da branch com maior Z
 
-        #Divide essa branch em duas partes
-        branch_max = branches_list[bi_max]
-        index_maxValue = np.argmax(branch_max[:, 2])                #Indice do ponto máximo dentro da branch
-
-        parte1 = branch_max[:index_maxValue + 1]                    #inicio até o máximo
-        parte2 = branch_max[index_maxValue:]                        #MAximo até o fim
-
-        #Substitui a branch pelo split
-        branches_list.pop(bi_max)
-        branches_list.insert(bi_max, parte2)
-        branches_list.insert(bi_max, parte1)
+    for i in range(len(branches_list)):
+        print(f"Branch {i+1}: {branches_list[i]} \n")
 
     return branches_list #retorna como lista, para melhor eficiencia
 
