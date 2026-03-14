@@ -16,8 +16,8 @@ from Auxiliar_Functions import transparencia
 
 import numpy as np
 
-"""
-1) Acertar a plotagem;
+""" 
+1) Acertar a plotagem; (CONCLUIDO)
 2) Alpha pequeno (máx 0.1)
 3) Curva de Nível (lambdaS com lambdaZ e lambdaZ com lambdaF)
  -> lambdaS com lambdaZ = azul
@@ -192,13 +192,31 @@ def Branches(alpha, Point : list, integ_config : list):
                 branches_list.pop(bp+1)                           #Remove a branch do ponto maximo
                 branches_list.insert(bp+1, branch_1)              #Substitui a branch que estava na posicao bp+1 
                 branches_list.insert(bp+2, branch_2)              #Cria uma nova branch que inicia a partir do ponto maximo
+        
+        else: #Se o Point nao estiver no prisma
+            #Extraindo os primeiros pontos das branches
+            distances = []         #lista contendo as distancias ate o Point em relacao a cada primeiro ponto de cada branch
+            branch_index = 0       #indice da branch que possui o ponto mais proximo do Point
+            for i in range(len(branches_list)):
+                distances.append(np.linalg.norm(branches_list[i][0] - Point))
+
+            branch_index = np.argmin(distances) #Armazena o indice da branch que possui o ponto mais proximo ao Point
+            
+            branch_atual = branches_list[branch_index]
+            index_max = np.argmax(branches_list[branch_index][:, 2]) #Extrai o indice do ponto maximo da branch bp + 1
+
+            Point_max = branch_atual[index_max]
+            if(not np.isclose(np.linalg.norm(Point_max - branch_atual[-1]), 0)): #Verifica se o ponto maximo nao eh o ultimo elemento da branch
+                branch_1 = branch_atual[: index_max + 1]          #Fatia a branch a partir do Point ate o o ponto maximo da branch (o incluindo)
+                branch_2 = branch_atual[index_max:]               #Fatia a branch a partir do ponto maximo (o incluinto)
+
+                branches_list.pop(branch_index)                   #Remove a branch do ponto maximo
+                branches_list.insert(branch_index, branch_1)      #Substitui a branch que estava na posicao bp+1 
+                branches_list.insert(branch_index + 1, branch_2)  #Cria uma nova branch que inicia a partir do ponto maximo
 
     else:
         #Transforma em um array numpy e recebe os pontos organizados
         branches_list = np.array([org_points])
-
-    for i in range(len(branches_list)):
-        print(f"Branch {i+1}: {branches_list[i]} \n")
 
     return branches_list #retorna como lista, para melhor eficiencia
 
