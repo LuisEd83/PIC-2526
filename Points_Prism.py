@@ -16,15 +16,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #Definindo constantes:
-h = 0.01 #Passo do metodo de Euler
-N = 1000 #Numero de realizacao de passo
-alpha = 0.1 #Variável de controle
+h = 0.01        #Passo do metodo de Euler
+N = 1000        #Numero de realizacao de passo
+alpha = 0.01    #Variável de controle
+Num_z = 10      #Numero de curvas de nivel
 
 sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
 U0 = [0.3, 0.2, 0.1]
-U1 = [0.5, 0.1, 0.1]
+
+U1 = [0.5, 0.1, 0.1] #Ponto importante
+
+U2 = [0.2, 0.4, 0.1] #Ponto inicial fora do prisma
 
 def if_pointIn(bar, Point : list):
     if(bar):
@@ -36,7 +40,7 @@ def Prism_plot(Point : list):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import Inicia as ini
 
-    #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
+    #__________IICIALIZANDO AMBIENTE 3D__________#
 
     #mapeia para baricentrica ou não
     mp = ini.baricentrica()
@@ -49,6 +53,8 @@ def Prism_plot(Point : list):
     ax.view_init(elev=30., azim=-130.) #Initial Camera Position
     
     if(af.transparencia()):
+        #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
+        
         #Vertices do triangulo
         Gw, Go = 0, 0
         Ww, Wo = 1, 0
@@ -79,20 +85,35 @@ def Prism_plot(Point : list):
         ax.set_ylabel('$v$')
         ax.set_zlabel('$z$')
 
-    #__________INICIALIZANDO PLOTAGEM DA CURVA__________#
+    #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
     
-    branches = b.Branches(alpha, Point, [h, N])
-    colors = b.Branches_colors(alpha, branches)
+    branches = b.Branches_point(alpha, Point, [h, N]) #Branches
+    colors = b.Branches_point_colors(alpha, branches) #Cores das branches
 
-    for i in range(len(branches)):
-        ax.plot(branches[i][:, 0],
-                branches[i][:, 1],
-                branches[i][:, 2],
-                color = colors[i],
-                linestyle = '-')
+    for i in range(len(branches)): #Esse laco irah criar as conexoes entre os pontos
+        ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
+                branches[i][:, 1], #Conjunto da componente Y da i-esima branch
+                branches[i][:, 2], #Conjunto da componente Z da i-esima branch
+                color = colors[i], #Cor da i-iesima branch
+                linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
 
     #Plotando o ponto inicial
     ax.plot(*Point, 'ko')
+
+    #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS AUTOVALORES__________#
+    auto_branches = b.Branches_auto([h, N], Num_z)
+    auto_colors = b.Branches_auto_colors()
+
+    for i in range(len(auto_branches)):
+        for j in range(2):
+            for k in range(len(auto_branches[i][j])):  #loop sobre cada branch
+                seg = auto_branches[i][j][k]
+                ax.plot(seg[:, 0],
+                        seg[:, 1],
+                        seg[:, 2],
+                        color = auto_colors[j],
+                        linestyle = '-')
+
 
     #Inicia plotagem
     plt.show()

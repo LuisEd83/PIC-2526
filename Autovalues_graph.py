@@ -10,9 +10,8 @@ Objetivo:
 - Extrair os pontos da curva dentro do prisma para encontrar todos os valores dos autovalores.
 
 """
-import Euler_Integration as ei
+import Numericals_methods as nm
 from Auxiliar_Functions import lambdz
-from _Branches import Branches
 
 import numpy as np
 import matplotlib.pyplot as plot
@@ -23,8 +22,8 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     
     #Y-AXIS#
     #Colecao de pontos dentro do prisma:
-    array_ph = ei.Euler_method(alpha, Point, integ_config) #Array com h > 0
-    array_mh = ei.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]]) #Array com h < 0
+    array_ph = nm.Euler_method(alpha, Point, integ_config) #Array com h > 0
+    array_mh = nm.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]]) #Array com h < 0
 
     #Retirando o ponto inicial (Point):
     array_ph = array_ph[~np.all(array_ph == Point, axis = 1)]

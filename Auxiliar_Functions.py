@@ -6,7 +6,7 @@ Objetivo:
 
 """
 
-import Euler_Integration as ei
+import Numericals_methods as nm
 import Functions as fun
 
 import numpy as np
@@ -45,7 +45,7 @@ def if_PointInEq(Point : list): #Retorna 1 se verdadeiro
     h = sqr3/2
 
     #Relizando comparacao
-    if((h1 + h2 + h3 - h == 0) and (0.0 <= z <= 1.0)):
+    if(np.isclose(h1 + h2 + h3, h)):
         return 1
     
     return 0
@@ -54,15 +54,15 @@ def if_PointInRet(Point : list): #Retorna 1 se verdadeiro
     #Extraindo pontos
     u, v, z = Point
 
-    if((0 <= u <= 1) and (0 <= v <= 1) and (0 <= u + v <= 1) and (0 <= z <= 1)):
+    if((0 <= u <= 1) and (0 <= v <= 1) and (0 <= u + v <= 1)):
         return 1
 
     return 0
 
 #Definindo uma funcao para concatenar os pontos para h > 0 e h < 0
 def Array_Concatenated(alpha, Point : list, integ_config : list):
-    array_ph = ei.Euler_method(alpha, Point, integ_config) #Array dos pontos tal que h > 0
-    array_mh = ei.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]]) #Array dos pontos tal que h < 0
+    array_ph = nm.Euler_method(alpha, Point, integ_config) #Array dos pontos tal que h > 0
+    array_mh = nm.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]]) #Array dos pontos tal que h < 0
 
     #Retirando o ponto inicial de array_mp
     array_mh = array_mh[~np.all(array_mh == Point, axis = 1)]

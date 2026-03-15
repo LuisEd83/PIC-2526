@@ -9,10 +9,10 @@ Os ramos devem:
 
 """
 
-import Euler_Integration as ei
+import Numericals_methods as nm
 from Inicia import baricentrica
 from Functions import fw, lbdas, lbdaf 
-from Auxiliar_Functions import transparencia
+from Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet
 
 import numpy as np
 
@@ -24,38 +24,24 @@ import numpy as np
  -> lambdaZ com lambdaF = vermelho
 """
 
+#________________________BRANCHES DOS PONTOS________________________#
 
 #Redefinindo funcoes para nao haver erro circular
 def lambdz(u, v, z, alpha):
     return(fw(u, v, z)/(u + alpha*np.cos(z)))
 
-def Branches(alpha, Point : list, integ_config : list):
-    #Determinando se deverao passar todos os pontos ou nao
-    t = not transparencia()
+def Branches_point(alpha, Point : list, integ_config : list):
 
-    #Constante:
-    sqr3 = np.sqrt(3)
     def pointInT(Point):
-        #Extraindo pontos
-        u, v, z = Point
+        if(not transparencia()):
+            return 1
 
-        if(baricentrica):
-            #Teorema de Viviani
-            h1 = np.abs(v)
-            h2 = (np.abs(-sqr3 * u + v))/2
-            h3 = (np.abs(sqr3 * u + v - sqr3))/2
-
-            h = sqr3/2
-
-            if((np.isclose(h1 + h2 + h3, h)) and (0.0 <= z <= 1.0)):
-                return 1
+        if(baricentrica()):
+            return (if_PointInEq(Point) and (0.0 <= Point[2] <= 1.0))
         else:
-            #Definicao de triangulo retangulo
-            if((0 <= u <= 1) and (0 <= v <= 1) and (0 <= u + v <= 1) and (0 <= z <= 1)):
-                return 1
-            
-        return t #0 se transparencia == 1 e 1 se transparencia == 0
+            return (if_PointInRet(Point) and (0.0 <= Point[2] <= 1.0))
     
+
     def indexs(array_org, lista_index : list, bool_value : bool, current_size, correc_error):
         #Condicao de parada
         if(current_size <= 0):
@@ -80,8 +66,8 @@ def Branches(alpha, Point : list, integ_config : list):
     
     """
 
-    array_ph = ei.Euler_method(alpha, Point, integ_config)                          #Array com h > 0
-    array_mh = ei.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]])   #Array com h < 0
+    array_ph = nm.Euler_method(alpha, Point, integ_config)                          #Array com h > 0
+    array_mh = nm.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]])   #Array com h < 0
 
     #Retirando o ponto inicial (Point):
     array_ph = array_ph[~np.all(array_ph == Point, axis = 1)]
@@ -161,7 +147,7 @@ def Branches(alpha, Point : list, integ_config : list):
 
         if(pointInT(Point)):
             #Localizando a branch e o indice do Point
-            bp = 0       #Armazena a branch do Point
+            bp = 0       #Armazena o indice da branch do Point
             index_bp = 0 #Armazena o indice do Point na branch 
             for i, branch in enumerate(branches_list):
                 for j, p in enumerate(branch):
@@ -207,12 +193,17 @@ def Branches(alpha, Point : list, integ_config : list):
 
             Point_max = branch_atual[index_max]
             if(not np.isclose(np.linalg.norm(Point_max - branch_atual[-1]), 0)): #Verifica se o ponto maximo nao eh o ultimo elemento da branch
-                branch_1 = branch_atual[: index_max + 1]          #Fatia a branch a partir do Point ate o o ponto maximo da branch (o incluindo)
-                branch_2 = branch_atual[index_max:]               #Fatia a branch a partir do ponto maximo (o incluinto)
+                branch_1 = branch_atual[: index_max + 1]                         #Fatia a branch a partir do Point ate o o ponto maximo da branch (o incluindo)
+                branch_2 = branch_atual[index_max:]                              #Fatia a branch a partir do ponto maximo (o incluinto)
 
-                branches_list.pop(branch_index)                   #Remove a branch do ponto maximo
-                branches_list.insert(branch_index, branch_1)      #Substitui a branch que estava na posicao bp+1 
-                branches_list.insert(branch_index + 1, branch_2)  #Cria uma nova branch que inicia a partir do ponto maximo
+                branches_list.pop(branch_index)                                  #Remove a branch do ponto maximo
+                branches_list.insert(branch_index, branch_1)                     #Substitui a branch que estava na posicao bp+1 
+                branches_list.insert(branch_index + 1, branch_2)                 #Cria uma nova branch que inicia a partir do ponto maximo
+
+            """
+            Observacao: um caso que PODERIA quebrar esta logica seria se o Point estiver proximo a uma outra branch que, visualizando no grafico do Point_Prism.py,
+            CLARAMENTE nao seria a branch que conteria o Point se ele estivesse no prisma.
+            """
 
     else:
         #Transforma em um array numpy e recebe os pontos organizados
@@ -225,7 +216,7 @@ def Branches(alpha, Point : list, integ_config : list):
 # 'r' - lambdaF => Vermelho
 # 'purple' - LambdaZ => Roxo
 # 'k' - ERROR
-def Branches_colors(alpha, branches):
+def Branches_point_colors(alpha, branches):
     #Definindo lista que irah armazenar os numeros ('b', 'r' ou 'purple')
     colors = []
 
@@ -246,5 +237,126 @@ def Branches_colors(alpha, branches):
             colors.append('purple') #Adiciona a cor Roxa
         else:
             colors.append('k')
+
+    return colors
+
+#________________________BRANCHES DOS AUTOVALORES________________________#
+
+#A funcao a seguir retornarah um dois ramos:
+#   -> Um ramo relacionado a LAMBDA_S == LAMBDA_Z
+#   -> Um ramo relacionado a LAMBDA_F == LAMBDA_Z
+def Branches_auto(bicetion_config : list, Num_z):
+
+    #Definindo intervalos
+    interval_1 = [0, 0.6] #Intervalo para LambdaS e LambdaZ
+    interval_2 = [0.4, 1] #Intervalo para LambdaF e LambdaZ
+
+    #Definindo o z inicial (inicio da curva de nivel):
+    zk = 0
+    dz = 1/Num_z #Diferenca entre duas curvas de nivel
+
+    #Definindo a lista que vai armazenar as Branchs
+    Branch_list = [] #Vai armazenar as branches LambdaS com LambdaZ e LambdaF com LambdaZ
+
+    def pointInT(Point):
+        if(not transparencia()):
+            return 1
+
+        if(baricentrica()):
+            return if_PointInEq(Point)
+        else:
+            return if_PointInRet(Point)
+
+    def indexs(array_org, lista_index : list, bool_value : bool, current_size, correc_error):
+        #Condicao de parada
+        if(current_size <= 0):
+            return
+
+        #Criando array para armazenar parte da lista
+        array_temp = np.array([])
+
+        for i in range(len(array_org)):
+            if(pointInT(array_org[i]) == int(not bool_value)):
+                bool_value = not bool_value                                                      #Inverte o valor do bool_value
+                lista_index.append(correc_error + i)                                             #Armazena o index que ocorreu o if e soma com o erro (advindo da recursividade)
+                correc_error += (i+1)                                                            #Adiciona o erro atual com o antigo
+                current_size -= (i+1)                                                            #Retiro parte do tamanho do array
+                array_temp = array_org[i+1:]                                                     #Cria uma copia do array a partir de um indice i
+                return indexs(array_temp, lista_index, bool_value, current_size, correc_error)
+
+
+    for _ in range(Num_z):
+        #Definindo uma lista que vai armazenar TODOS os pontos
+        Points_list = []
+
+        points_s = nm.Bisection_method(interval_1, bicetion_config, lbdas, zk) #Armazena os pontos onde LambdaS - LambdaZ == 0
+        points_f = nm.Bisection_method(interval_2, bicetion_config, lbdaf, zk) #Armazena os pontos onde LambdaF - LambdaZ == 0
+        Points_list = [points_s, points_f]
+
+        #Definindo variavel que vai armazenar as branches da curva de nivel:
+        branches_curva = []
+
+        for i in range(2): 
+            index_list = []                                     #Lista dos indices
+            boolean_value = False                               #Inicia false, para termos controle
+            c_size = len(Points_list[i])                        #Tamanho atual do Point_list
+
+            if(pointInT(Points_list[i][0])): #Verifica se o primeiro ponto da lista estah ou nao no prisma (a depender da transparencia)
+                boolean_value = not boolean_value
+
+            print(f"\n--- i = {i} ---")
+            print(f"Tamanho de Points_list[i]: {c_size}")
+            print(f"Primeiros pontos: {Points_list[i][:3]}")
+            print(f"boolean_value (dentro do prisma?): {boolean_value}")
+
+            indexs(Points_list[i], index_list, boolean_value, c_size, correc_error = 0)
+
+            print(f"index_list após indexs(): {index_list}")
+            print(f"inside inicial: {bool(pointInT(Points_list[i][0]))}")
+
+
+            #Inicializando variaveis para loop:
+            p = 0                                       #Variavel de posicao
+            inside = bool(pointInT(Points_list[i][0]))  #Variavel de controle
+
+            #Definindo variavel que vai armazenar as branches da curva de nivel:
+            branch_curva = []
+
+            #Isso alterna a escolha dos pontos
+            for j in range(len(index_list)):
+                if(inside): #Se os pontos estiverem dentro do prisma, ele os seleciona
+                    branch_curva.append(Points_list[i][p : index_list[j]])
+
+                #Note que, se inside == False, ele apenas pula para o proximo indice, nao escolhendo os pontos que estao fora
+                p = index_list[j]
+                inside = not inside
+
+            if(inside):
+                branch_curva.append(Points_list[i][p:]) #Adicionando o ultimo segmento se a ultima iteracao fizer Inside = True
+
+            branches_curva.append(branch_curva) #Armazena os lados LambdaS ou LambdaF (com LambdaZ)
+        
+        Branch_list.append(branches_curva) #Vai armazenar a curva de nivel inteira para z = zk
+        
+        #Atualizo o zk:
+        zk += dz #Proxima iteracao -> nova curva de nivel
+
+    
+    #print(f"Branch {1}: {Branch_list[0]}\n")
+
+    return Branch_list
+            
+
+#A funcao a seguir retornarah um duas cores relacionadas aos ramos da funcao anterior:
+#   -> Se o ramo for do tipo LAMBDA_S == LAMBDA_Z ==> color = marrom escuro (color='#5C4033')
+#   -> Se o ramo for do tipo LAMBDA_F == LAMBDA_Z ==> color = marrom claro (color='#C4A484')
+def Branches_auto_colors():
+    #Definindo variavel para armazenamento das cores:
+    colors = []
+
+    #Pela definicao da funcao anterior (via logica da programacao), dado o indice i da Branch,  
+    #Branch[i][0] SEMPRE sera marrom escuro e Branch[i][1] SEMPRE sera marrom claro, logo
+    colors.append('#5C4033')
+    colors.append('#C4A484')
 
     return colors
