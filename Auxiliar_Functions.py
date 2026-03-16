@@ -45,7 +45,7 @@ def if_PointInEq(Point : list): #Retorna 1 se verdadeiro
     h = sqr3/2
 
     #Relizando comparacao
-    if(np.isclose(h1 + h2 + h3, h)):
+    if(np.abs(h1 + h2 + h3 - h) <= 1e-6):
         return 1
     
     return 0

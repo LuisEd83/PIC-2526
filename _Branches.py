@@ -30,9 +30,10 @@ import numpy as np
 def lambdz(u, v, z, alpha):
     return(fw(u, v, z)/(u + alpha*np.cos(z)))
 
+
 def Branches_point(alpha, Point : list, integ_config : list):
 
-    def pointInT(Point):
+    def pointInP(Point):
         if(not transparencia()):
             return 1
 
@@ -40,7 +41,6 @@ def Branches_point(alpha, Point : list, integ_config : list):
             return (if_PointInEq(Point) and (0.0 <= Point[2] <= 1.0))
         else:
             return (if_PointInRet(Point) and (0.0 <= Point[2] <= 1.0))
-    
 
     def indexs(array_org, lista_index : list, bool_value : bool, current_size, correc_error):
         #Condicao de parada
@@ -51,7 +51,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
         array_temp = np.array([])
 
         for i in range(len(array_org)):
-            if(pointInT(array_org[i]) == int(not bool_value)):
+            if(pointInP(array_org[i]) == int(not bool_value)):
                 bool_value = not bool_value                                                      #Inverte o valor do bool_value
                 lista_index.append(correc_error + i)                                             #Armazena o index que ocorreu o if e soma com o erro (advindo da recursividade)
                 correc_error += (i+1)                                                            #Adiciona o erro atual com o antigo
@@ -120,7 +120,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
         bool_value = False              #Variavel booleana para controle
         size_array = len(org_points)    #Variavel para armazenar tamanho do array dos pontos organizados
         
-        if(pointInT(org_points[0])):    #Determina valor booleano para funcao
+        if(pointInP(org_points[0])):    #Determina valor booleano para funcao
             bool_value = not bool_value
         
         #Retorna os indices onde ocorre a transicao de "dentro do prisma" para "fora do prisma" e vice-versa
@@ -128,7 +128,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
 
         #Inicializando variaveis para loop:
         p = 0                                   #Variavel de posicao
-        inside = bool(pointInT(org_points[0]))  #Variavel de controle
+        inside = bool(pointInP(org_points[0]))  #Variavel de controle
 
         #Isso alterna a escolha dos pontos
         for i in range(len(points_indexs)):
@@ -145,7 +145,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
         #for i in range(len(branches_list)):
         #    print(f"Branch {i+1}: {branches_list[i]} \n")
 
-        if(pointInT(Point)):
+        if(pointInP(Point)):
             #Localizando a branch e o indice do Point
             bp = 0       #Armazena o indice da branch do Point
             index_bp = 0 #Armazena o indice do Point na branch 
@@ -248,8 +248,8 @@ def Branches_point_colors(alpha, branches):
 def Branches_auto(bicetion_config : list, Num_z):
 
     #Definindo intervalos
-    interval_1 = [0, 0.6] #Intervalo para LambdaS e LambdaZ
-    interval_2 = [0.4, 1] #Intervalo para LambdaF e LambdaZ
+    interval_1 = [0.0, 0.55] #Intervalo para LambdaS e LambdaZ
+    interval_2 = [0.4, 1.0] #Intervalo para LambdaF e LambdaZ
 
     #Definindo o z inicial (inicio da curva de nivel):
     zk = 0
@@ -258,32 +258,33 @@ def Branches_auto(bicetion_config : list, Num_z):
     #Definindo a lista que vai armazenar as Branchs
     Branch_list = [] #Vai armazenar as branches LambdaS com LambdaZ e LambdaF com LambdaZ
 
-    def pointInT(Point):
+    sqr3 = np.sqrt(3) #Constante
+    def if_PointT(Point : list):
         if(not transparencia()):
             return 1
+        
+        #Extrai as componentes do ponto:
+        u, v, z = Point
 
         if(baricentrica()):
-            return if_PointInEq(Point)
+            #______USANDO O TEOREMA DE VIVIANI______#
+
+            #Definindo as distancias entre o ponto P e as arestas do triangulo equilatero
+            h1 = np.abs(v)
+            h2 = (np.abs(-sqr3 * u + v))/2
+            h3 = (np.abs(sqr3 * u + v - sqr3))/2
+
+            #Altura total
+            h = sqr3/2
+
+            #Relizando comparacao
+            if(np.abs(h1 + h2 + h3 - h) <= 1e-6):
+                return 1
         else:
-            return if_PointInRet(Point)
-
-    def indexs(array_org, lista_index : list, bool_value : bool, current_size, correc_error):
-        #Condicao de parada
-        if(current_size <= 0):
-            return
-
-        #Criando array para armazenar parte da lista
-        array_temp = np.array([])
-
-        for i in range(len(array_org)):
-            if(pointInT(array_org[i]) == int(not bool_value)):
-                bool_value = not bool_value                                                      #Inverte o valor do bool_value
-                lista_index.append(correc_error + i)                                             #Armazena o index que ocorreu o if e soma com o erro (advindo da recursividade)
-                correc_error += (i+1)                                                            #Adiciona o erro atual com o antigo
-                current_size -= (i+1)                                                            #Retiro parte do tamanho do array
-                array_temp = array_org[i+1:]                                                     #Cria uma copia do array a partir de um indice i
-                return indexs(array_temp, lista_index, bool_value, current_size, correc_error)
-
+            if((0 <= u <= 1) and (0 <= v <= 1) and (0 <= u + v <= 1)):
+                return 1
+            
+        return 0
 
     for _ in range(Num_z):
         #Definindo uma lista que vai armazenar TODOS os pontos
@@ -293,50 +294,26 @@ def Branches_auto(bicetion_config : list, Num_z):
         points_f = nm.Bisection_method(interval_2, bicetion_config, lbdaf, zk) #Armazena os pontos onde LambdaF - LambdaZ == 0
         Points_list = [points_s, points_f]
 
+        print(f"points_s antes: {len(points_s)} pontos")
+        print(f"points_f antes: {len(points_f)} pontos")
+
         #Definindo variavel que vai armazenar as branches da curva de nivel:
         branches_curva = []
 
-        for i in range(2): 
-            index_list = []                                     #Lista dos indices
-            boolean_value = False                               #Inicia false, para termos controle
-            c_size = len(Points_list[i])                        #Tamanho atual do Point_list
+        for i in range(len(Points_list)): 
+            filter_list = []                       #Lista que vai armazenar os pontos filtrados
+            
+            for j in range(len(Points_list[i])):
+                if(if_PointT(Points_list[i][j])):
+                    filter_list.append(Points_list[i][j])
 
-            if(pointInT(Points_list[i][0])): #Verifica se o primeiro ponto da lista estah ou nao no prisma (a depender da transparencia)
-                boolean_value = not boolean_value
+            if(len(filter_list) >= 2): #So adiciona se tiver pontos suficientes
+                branches_curva.append(filter_list) #Armazena os lados LambdaS ou LambdaF (com LambdaZ)
 
-            print(f"\n--- i = {i} ---")
-            print(f"Tamanho de Points_list[i]: {c_size}")
-            print(f"Primeiros pontos: {Points_list[i][:3]}")
-            print(f"boolean_value (dentro do prisma?): {boolean_value}")
-
-            indexs(Points_list[i], index_list, boolean_value, c_size, correc_error = 0)
-
-            print(f"index_list após indexs(): {index_list}")
-            print(f"inside inicial: {bool(pointInT(Points_list[i][0]))}")
-
-
-            #Inicializando variaveis para loop:
-            p = 0                                       #Variavel de posicao
-            inside = bool(pointInT(Points_list[i][0]))  #Variavel de controle
-
-            #Definindo variavel que vai armazenar as branches da curva de nivel:
-            branch_curva = []
-
-            #Isso alterna a escolha dos pontos
-            for j in range(len(index_list)):
-                if(inside): #Se os pontos estiverem dentro do prisma, ele os seleciona
-                    branch_curva.append(Points_list[i][p : index_list[j]])
-
-                #Note que, se inside == False, ele apenas pula para o proximo indice, nao escolhendo os pontos que estao fora
-                p = index_list[j]
-                inside = not inside
-
-            if(inside):
-                branch_curva.append(Points_list[i][p:]) #Adicionando o ultimo segmento se a ultima iteracao fizer Inside = True
-
-            branches_curva.append(branch_curva) #Armazena os lados LambdaS ou LambdaF (com LambdaZ)
+            print(f"Points {i} filtrados: {len(filter_list)}")
         
-        Branch_list.append(branches_curva) #Vai armazenar a curva de nivel inteira para z = zk
+        if(branches_curva): #So adiciona a curva se tiver pelo menos uma branch valida
+            Branch_list.append(branches_curva) #Vai armazenar a curva de nivel inteira para z = zk
         
         #Atualizo o zk:
         zk += dz #Proxima iteracao -> nova curva de nivel

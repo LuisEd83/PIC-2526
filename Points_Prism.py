@@ -105,14 +105,13 @@ def Prism_plot(Point : list):
     auto_colors = b.Branches_auto_colors()
 
     for i in range(len(auto_branches)):
-        for j in range(2):
-            for k in range(len(auto_branches[i][j])):  #loop sobre cada branch
-                seg = auto_branches[i][j][k]
-                ax.plot(seg[:, 0],
-                        seg[:, 1],
-                        seg[:, 2],
-                        color = auto_colors[j],
-                        linestyle = '-')
+        for j in range(len(auto_branches[i])):  # ← já deve estar assim
+            seg = np.array(auto_branches[i][j])
+            ax.plot(seg[:, 0],
+                    seg[:, 1],
+                    seg[:, 2],
+                    color = auto_colors[j],
+                    linestyle = '-')
 
 
     #Inicia plotagem
