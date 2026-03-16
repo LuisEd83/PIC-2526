@@ -61,6 +61,13 @@ def lamb_graph(alpha, Point : list, integ_config : list):
             print("[ERROR] - Impossibilidade de determinar ordem")
             exit()
     
+    #Procuranto o Point
+    index_Point = 0         #Inicia em zero
+    for i in range(len(org_points)):
+        if((org_points[i][0] == Point[0]) and (org_points[i][1] == Point[1]) and (org_points[i][2] == Point[2])):
+            index_Point = i                                   #Armazena o index do Point no org_points
+            index_Point = index_Point/(2*integ_config[1] + 1) #Corrige para a escala do grafico
+
     #Inicializando vetores dos lambdas
     array_LambS = []
     array_LambF = []
@@ -82,7 +89,7 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     #Iniciando a figura
     plot.figure()
 
-    plot.plot()
+    plot.axvline(x = index_Point, color = 'k', linestyle = '--')
 
     #Plotando pontos
     plot.plot(k, array_LambS, color = 'b', linestyle = '-', label = '\u03BBs')

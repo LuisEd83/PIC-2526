@@ -24,7 +24,7 @@ Num_z = 20      #Numero de curvas de nivel
 sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
-U0 = [0.3, 0.2, 0.1]
+U0 = [0.5, 0.3, 0.1]
 
 U1 = [0.5, 0.1, 0.1] #Ponto importante
 
@@ -95,13 +95,14 @@ def Prism_plot(Point : list):
                 branches[i][:, 1], #Conjunto da componente Y da i-esima branch
                 branches[i][:, 2], #Conjunto da componente Z da i-esima branch
                 color = colors[i], #Cor da i-iesima branch
-                linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
+                linestyle = '-',   #Tipo de linha (no caso sera a linha continua)
+                zorder = 4)        #Ordem de prioridade
 
     #Plotando o ponto inicial
     ax.plot(*Point, 'ko')
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS AUTOVALORES__________#
-    auto_branches = b.Branches_auto([h, N], Num_z)
+    auto_branches = b.Branches_auto([h, N], Num_z, alpha)
     auto_colors = b.Branches_auto_colors()
 
     for i in range(len(auto_branches)):
@@ -117,4 +118,4 @@ def Prism_plot(Point : list):
     #Inicia plotagem
     plt.show()
 
-Prism_plot(U2)
+Prism_plot(U0)

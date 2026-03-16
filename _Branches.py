@@ -245,7 +245,7 @@ def Branches_point_colors(alpha, branches):
 #A funcao a seguir retornarah um dois ramos:
 #   -> Um ramo relacionado a LAMBDA_S == LAMBDA_Z
 #   -> Um ramo relacionado a LAMBDA_F == LAMBDA_Z
-def Branches_auto(bicetion_config : list, Num_z):
+def Branches_auto(bicetion_config : list, Num_z, alpha):
 
     #Definindo intervalos
     #interval_1 = [0.0, 0.6]
@@ -291,8 +291,8 @@ def Branches_auto(bicetion_config : list, Num_z):
         #Definindo uma lista que vai armazenar TODOS os pontos
         Points_list = []
 
-        points_s = nm.Bisection_method(interval, bicetion_config, lbdas, zk) #Armazena os pontos onde LambdaS - LambdaZ == 0
-        points_f = nm.Bisection_method(interval, bicetion_config, lbdaf, zk) #Armazena os pontos onde LambdaF - LambdaZ == 0
+        points_s = nm.Bisection_method(interval, bicetion_config, lbdas, zk, alpha) #Armazena os pontos onde LambdaS - LambdaZ == 0
+        points_f = nm.Bisection_method(interval, bicetion_config, lbdaf, zk, alpha) #Armazena os pontos onde LambdaF - LambdaZ == 0
         Points_list = [points_s, points_f]
 
         #Definindo variavel que vai armazenar as branches da curva de nivel:

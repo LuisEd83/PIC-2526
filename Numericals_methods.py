@@ -7,7 +7,8 @@ dos compoentes do campo a partir de um ponto inicial escolhido.
 """
 
 import Campo_Ez as df
-from Functions import lbdc, map
+from Functions import lbdc
+from Auxiliar_Functions import lambdz
 from Inicia import baricentrica
 from numpy import array, ceil, abs, log10, sqrt
 
@@ -53,8 +54,8 @@ def Euler_method(alpha, point : list, integ_config : list):
 #   -> function: eh a funcao lambdaS ou lambdaF
 #   -> z: Eh a curva de nivel
 #   -> tol: Eh a tolerancia
-def Bisection_method(interval : list, bisection_config : list, function, z, e = 1e-10): 
-    a0, b0 = map(interval[0], interval[1], baricentrica)       #Extraindo intervalo
+def Bisection_method(interval : list, bisection_config : list, function, z, alpha, e = 1e-10): 
+    a0, b0 = interval       #Extraindo intervalo
 
     h, N = bisection_config #Extraindo as configuracoes para realizar o metodo
 
@@ -69,6 +70,8 @@ def Bisection_method(interval : list, bisection_config : list, function, z, e = 
 
     #Funcao que calcula a diferenca entre as funcoes
     def d(x, y, z): #x, y, z sao o uk, vk e z 
+        if(alpha != 0):
+            return function(x, y, z) - lambdz(x, y, z, alpha)
         return function(x, y, z) - lbdc(x, y, z)
     
     Points = []                               #Variavel para armazenar os pontos
@@ -113,9 +116,5 @@ def Bisection_method(interval : list, bisection_config : list, function, z, e = 
         vk += h                                #Isso direciona o Metodo da bissecao para a proxima reta horizontal
 
     return Points
-
-from Functions import lbdas
-zk = 5
-Bisection_method([0.0, 1.0], [0.01, 10], lbdas, zk)
     
 
