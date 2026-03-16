@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 h = 0.01        #Passo do metodo de Euler
 N = 1000        #Numero de realizacao de passo
 alpha = 0.01    #Variável de controle
-Num_z = 10      #Numero de curvas de nivel
+Num_z = 20      #Numero de curvas de nivel
 
 sqr3 = np.sqrt(3) 
 
@@ -117,4 +117,4 @@ def Prism_plot(Point : list):
     #Inicia plotagem
     plt.show()
 
-Prism_plot(U1)
+Prism_plot(U2)

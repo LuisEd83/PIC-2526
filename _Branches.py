@@ -248,8 +248,9 @@ def Branches_point_colors(alpha, branches):
 def Branches_auto(bicetion_config : list, Num_z):
 
     #Definindo intervalos
-    interval_1 = [0.0, 0.55] #Intervalo para LambdaS e LambdaZ
-    interval_2 = [0.4, 1.0] #Intervalo para LambdaF e LambdaZ
+    #interval_1 = [0.0, 0.6]
+    #interval_2 = [0.4, 1.0]
+    interval = [0.0, 1.0]
 
     #Definindo o z inicial (inicio da curva de nivel):
     zk = 0
@@ -290,12 +291,9 @@ def Branches_auto(bicetion_config : list, Num_z):
         #Definindo uma lista que vai armazenar TODOS os pontos
         Points_list = []
 
-        points_s = nm.Bisection_method(interval_1, bicetion_config, lbdas, zk) #Armazena os pontos onde LambdaS - LambdaZ == 0
-        points_f = nm.Bisection_method(interval_2, bicetion_config, lbdaf, zk) #Armazena os pontos onde LambdaF - LambdaZ == 0
+        points_s = nm.Bisection_method(interval, bicetion_config, lbdas, zk) #Armazena os pontos onde LambdaS - LambdaZ == 0
+        points_f = nm.Bisection_method(interval, bicetion_config, lbdaf, zk) #Armazena os pontos onde LambdaF - LambdaZ == 0
         Points_list = [points_s, points_f]
-
-        print(f"points_s antes: {len(points_s)} pontos")
-        print(f"points_f antes: {len(points_f)} pontos")
 
         #Definindo variavel que vai armazenar as branches da curva de nivel:
         branches_curva = []
@@ -304,13 +302,11 @@ def Branches_auto(bicetion_config : list, Num_z):
             filter_list = []                       #Lista que vai armazenar os pontos filtrados
             
             for j in range(len(Points_list[i])):
-                if(if_PointT(Points_list[i][j])):
+                if(if_PointT(Points_list[i][j])):  #Verifica se o ponto esta no triangulo
                     filter_list.append(Points_list[i][j])
 
             if(len(filter_list) >= 2): #So adiciona se tiver pontos suficientes
                 branches_curva.append(filter_list) #Armazena os lados LambdaS ou LambdaF (com LambdaZ)
-
-            print(f"Points {i} filtrados: {len(filter_list)}")
         
         if(branches_curva): #So adiciona a curva se tiver pelo menos uma branch valida
             Branch_list.append(branches_curva) #Vai armazenar a curva de nivel inteira para z = zk

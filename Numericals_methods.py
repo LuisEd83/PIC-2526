@@ -7,7 +7,7 @@ dos compoentes do campo a partir de um ponto inicial escolhido.
 """
 
 import Campo_Ez as df
-from Functions import lbdc
+from Functions import lbdc, map
 from Inicia import baricentrica
 from numpy import array, ceil, abs, log10, sqrt
 
@@ -54,8 +54,12 @@ def Euler_method(alpha, point : list, integ_config : list):
 #   -> z: Eh a curva de nivel
 #   -> tol: Eh a tolerancia
 def Bisection_method(interval : list, bisection_config : list, function, z, e = 1e-10): 
-    a0, b0 = interval       #Extraindo intervalo
+    a0, b0 = map(interval[0], interval[1], baricentrica)       #Extraindo intervalo
+
     h, N = bisection_config #Extraindo as configuracoes para realizar o metodo
+
+    if(h > 0.1):
+        h = 0.01
 
     #Definindo o numero de iteracoes:
     Num_i = int(ceil((log10(b0 - a0) - log10(e))/log10(2)))
@@ -67,35 +71,51 @@ def Bisection_method(interval : list, bisection_config : list, function, z, e = 
     def d(x, y, z): #x, y, z sao o uk, vk e z 
         return function(x, y, z) - lbdc(x, y, z)
     
-    Points = []    #Variavel para armazenar os pontos
-    altura = 0     #Constante para controle
-    if(baricentrica):
-        altura = sqrt(3)/2
-    else:
-        altura = 1
+    Points = []                               #Variavel para armazenar os pontos
+    altura = sqrt(3)/2 if baricentrica else 1 #Constante para controle de altura
 
     for _ in range(N):
-        a, b = a0, b0
-
         if(vk >= altura):                  #Quebra iteracao se a linha v = k estiver fora do triangulo
             break
+        
+        a, b = a0, b0                      #Armazena o intervalo original
 
-        if(d(a, vk, z) * d(b, vk, z) > 0): #Pula iteracao se nao houver mudança de sinal no intervalo inicial
+        #Armazenando os valores da funcao d(x, y, z)
+        da = d(a, vk, z)
+        db = d(b, vk, z)
+
+        if(abs(da) <= e):       #Se d(a, vk, z) for proximo de zero, isso significa que d(a, vk, z) eh uma zero espurio 
+            a += h              #Adiciona um passo ao "a" 
+            da = d(a, vk, z)    #Atualiza o da
+
+        if(da*db > 0):          #Se nao houver mudanca de sinal no intervalo [a, b] para v = k, entao pulamos para o v = k + h
             vk += h
             continue
 
         for _ in range(Num_i):
-            uk = (a+b)/2                   #Calculo o ponto medio do intervalo
+            uk = (a+b)/2                      #Calculo o ponto medio do intervalo
 
             if(abs(uk - a) <= e * max(abs(uk), 1)):
-                Points.append([uk, vk, z]) #Armazena o ponto em que a diferenca eh proximo a ZERO
+                Points.append([uk, vk, z])    #Armazena o ponto em que a diferenca eh proximo a ZERO
                 break
             else:
-                if(d(a, vk, z) * d(uk, vk, z) < 0): 
+                product = da * d(uk, vk, z)
+
+                if(product < 0):               #Se ha a troca de sinais
                     b = uk
-                elif(d(a, vk, z) * d(uk, vk, z) >= 0):
+                elif(product > 0):             #Se nao ha a troca de sinal
                     a = uk
+                    da = d(a, vk, z)           #Atualiza o da para a proxima iteracao
+                else:
+                    Points.append([uk, vk, z]) #Raiz exata
+                    break
         
-        vk += h                            #Isso direciona o Metodo da bissecao para a proxima reta horizontal
+        vk += h                                #Isso direciona o Metodo da bissecao para a proxima reta horizontal
 
     return Points
+
+from Functions import lbdas
+zk = 5
+Bisection_method([0.0, 1.0], [0.01, 10], lbdas, zk)
+    
+
