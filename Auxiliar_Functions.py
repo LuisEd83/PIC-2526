@@ -16,6 +16,18 @@ def transparencia():
     x = 1 #x = 1 para ver apenas os pontos dentro do prisma; x = 0 e para ver todos os pontos
     return x
 
+#Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
+#nivel lambda_s = lambda_z
+def branchSlow(): 
+    s = 1 #s = 1 para permitir que seja plotado o ramo
+    return s
+
+#Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
+#nivel lambda_f = lambda_z
+def branchFast(): 
+    f = 1 #s = 1 para permitir que seja plotado o ramo
+    return f
+
 ##############################################################
 #Derivada da funcao continua e crescente no intervalo [0,1]
 def az(z): #Da/dz

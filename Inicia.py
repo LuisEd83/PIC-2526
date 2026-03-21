@@ -49,7 +49,7 @@ def viscosidades(): #Viscosidades da agua, do oleo e do gas
     return(muw0, muo, mug)
     
 def baricentrica(): #Mapeamento ou nao?
-    x = 1# x = 1 se quiser coordenadas baricentricas
+    x = 0# x = 1 se quiser coordenadas baricentricas
     return(x)
     
 def DadosIntegracao(): #Para integracao dos contatos

@@ -16,14 +16,6 @@ from Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet
 
 import numpy as np
 
-""" 
-1) Acertar a plotagem; (CONCLUIDO)
-2) Alpha pequeno (máx 0.1)
-3) Curva de Nível (lambdaS com lambdaZ e lambdaZ com lambdaF)
- -> lambdaS com lambdaZ = azul
- -> lambdaZ com lambdaF = vermelho
-"""
-
 #________________________BRANCHES DOS PONTOS________________________#
 
 #Redefinindo funcoes para nao haver erro circular
@@ -59,6 +51,37 @@ def Branches_point(alpha, Point : list, integ_config : list):
                 array_temp = array_org[i+1:].copy()                                              #Cria uma copia do array a partir de um indice i
                 return indexs(array_temp, lista_index, bool_value, current_size, correc_error)
 
+    def lambd_comp(Point : list, alpha):
+        #Definindo valores e comparando:
+        lambdaS_value = lbdas(*Point)
+        lambdaF_value = lbdaf(*Point)
+        lambdaZ_value = lambdz(*Point, alpha)
+
+        if((lambdaZ_value < lambdaF_value < lambdaS_value) or (lambdaZ_value < lambdaS_value < lambdaF_value)):
+            return 1
+        elif((lambdaS_value < lambdaZ_value < lambdaF_value) or (lambdaF_value < lambdaZ_value < lambdaS_value)):
+            return 2
+        elif((lambdaF_value < lambdaS_value < lambdaZ_value) or (lambdaS_value < lambdaF_value < lambdaZ_value)):
+            return 3
+        else:
+            return -1
+
+    def indexs_ccurv(lista_index : list, array_org, color_value, alpha, current_size, correc_error):
+        #condição de parada
+        if(current_size <= 0):
+            return
+        
+        #Criando array para armazenar parte da lista
+        array_temp = np.array([])
+
+        for i in range(len(org_points)):
+            if(lambd_comp(org_points[i], alpha) != color_value):
+                color_value = lambd_comp(org_points[i], alpha)
+                lista_index.append(correc_error + i)
+                correc_error += (i+1)
+                current_size -= (i+1)
+                array_temp = array_org[i+1:].copy()
+                return indexs(array_temp, lista_index, color_value, current_size, correc_error)
 
     """
     
@@ -206,8 +229,22 @@ def Branches_point(alpha, Point : list, integ_config : list):
             """
 
     else:
-        #Transforma em um array numpy e recebe os pontos organizados
-        branches_list = np.array([org_points])
+        #Criando a variaveis chamar funcao:
+        points_indexs = []                                              #Armazenamento de indices
+        color_value = lambd_comp(org_points[0], alpha)                  #Variavel inteira para controle
+        size_array = len(org_points)                                    #Variavel para armazenar tamanho do array dos pontos organizados
+        
+        #Retorna os indices onde ocorre a transicao de "dentro do prisma" para "fora do prisma" e vice-versa
+        indexs_ccurv(points_indexs, org_points, color_value, alpha, size_array, correc_error = 0)
+
+        #Inicializando variaveis para loop:
+        p = 0                                   #Variavel de posicao
+
+        for i in range(len(points_indexs)):
+            branches_list.append(org_points[p : points_indexs[i] + 1])
+            p = points_indexs[i]
+        
+        branches_list.append(org_points[p:])
 
     return branches_list #retorna como lista, para melhor eficiencia
 
@@ -232,9 +269,9 @@ def Branches_point_colors(alpha, branches):
         if((lambdaZ_value < lambdaF_value < lambdaS_value) or (lambdaZ_value < lambdaS_value < lambdaF_value)):
             colors.append('b') #Adiciona a cor Azul
         elif((lambdaS_value < lambdaZ_value < lambdaF_value) or (lambdaF_value < lambdaZ_value < lambdaS_value)):
-            colors.append('r') #Adiciona a cor Vermelha
+            colors.append('magenta') #Adiciona a cor Vermelha
         elif((lambdaF_value < lambdaS_value < lambdaZ_value) or (lambdaS_value < lambdaF_value < lambdaZ_value)):
-            colors.append('purple') #Adiciona a cor Roxa
+            colors.append('r') #Adiciona a cor Roxa
         else:
             colors.append('k')
 
@@ -245,7 +282,7 @@ def Branches_point_colors(alpha, branches):
 #A funcao a seguir retornarah um dois ramos:
 #   -> Um ramo relacionado a LAMBDA_S == LAMBDA_Z
 #   -> Um ramo relacionado a LAMBDA_F == LAMBDA_Z
-def Branches_auto(bicetion_config : list, Num_z, alpha):
+def Branches_auto(bicetion_config : list, Num_z, alpha, base, altura):
 
     #Definindo intervalos
     #interval_1 = [0.0, 0.6]
@@ -253,8 +290,8 @@ def Branches_auto(bicetion_config : list, Num_z, alpha):
     interval = [0.0, 1.0]
 
     #Definindo o z inicial (inicio da curva de nivel):
-    zk = 0
-    dz = 1/Num_z #Diferenca entre duas curvas de nivel
+    zk = base
+    dz = altura/Num_z #Diferenca entre duas curvas de nivel
 
     #Definindo a lista que vai armazenar as Branchs
     Branch_list = [] #Vai armazenar as branches LambdaS com LambdaZ e LambdaF com LambdaZ
@@ -293,6 +330,12 @@ def Branches_auto(bicetion_config : list, Num_z, alpha):
 
         points_s = nm.Bisection_method(interval, bicetion_config, lbdas, zk, alpha) #Armazena os pontos onde LambdaS - LambdaZ == 0
         points_f = nm.Bisection_method(interval, bicetion_config, lbdaf, zk, alpha) #Armazena os pontos onde LambdaF - LambdaZ == 0
+        
+        points_s.insert(0, [0.0, 0.0, 0.0])
+
+        if(not baricentrica()):
+            points_s.append([0.0, 1.0, zk])
+
         Points_list = [points_s, points_f]
 
         #Definindo variavel que vai armazenar as branches da curva de nivel:

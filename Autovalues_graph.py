@@ -10,8 +10,14 @@ Objetivo:
 - Extrair os pontos da curva dentro do prisma para encontrar todos os valores dos autovalores.
 
 """
-import Numericals_methods as nm
-from Auxiliar_Functions import lambdz
+
+"""
+1) Flags: Plotar todos os pontos // 
+"""
+
+from Auxiliar_Functions import lambdz, transparencia
+from _Branches import Branches_point, Branches_point_colors
+from Functions import lbdaf, lbdas
 
 import numpy as np
 import matplotlib.pyplot as plot
@@ -20,86 +26,38 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import Functions as fun
     
-    #Y-AXIS#
-    #Colecao de pontos dentro do prisma:
-    array_ph = nm.Euler_method(alpha, Point, integ_config) #Array com h > 0
-    array_mh = nm.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]]) #Array com h < 0
+    #Extraio as branches:
+    branches = Branches_point(alpha, Point, integ_config) #Ramos (conjunto de pontos)
 
-    #Retirando o ponto inicial (Point):
-    array_ph = array_ph[~np.all(array_ph == Point, axis = 1)]
-    array_mh = array_mh[~np.all(array_mh == Point, axis = 1)]
-
-    #Extraindo as colunas destes arrays:
-    coluna_ph = array_ph[:, 2]
-    coluna_mh = array_mh[:, 2]
-
-    #Criando uma variável para armazenar os pontos na ordem correta
-    org_points = np.array([])
-
-    #Variavel de controle de laco
-    i = 0
-
-    while(1):
-        if(coluna_ph[0] - coluna_mh[i] > 0):
-            #Inverte o array se o primeiro elemento do array_mh estiver mais proximo do Point
-            if(np.linalg.norm(array_mh[-1] - Point) > np.linalg.norm(array_mh[0] - Point)): 
-                array_mh = np.flip(array_mh, axis = 0) #Inverte apenas os elementos do array
-
-            org_points = np.concatenate([array_mh, np.array(Point).reshape(1, -1), array_ph])
-            break
-        elif(coluna_ph[0] - coluna_mh[i] < 0):
-            #Inverte o array se o primeiro elemento do array_ph estiver mais proximo do Point
-            if(np.linalg.norm(array_ph[-1] - Point) > np.linalg.norm(array_ph[0] - Point)):
-                array_ph = np.flip(array_ph, axis = 0) #Inverte apenas os elementos do array
-
-            org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
-            break
-        else:
-            i += 1
-
-        if(i == len(coluna_mh)):
-            print("[ERROR] - Impossibilidade de determinar ordem")
-            exit()
-    
-    #Procuranto o Point
-    index_Point = 0         #Inicia em zero
-    for i in range(len(org_points)):
-        if((org_points[i][0] == Point[0]) and (org_points[i][1] == Point[1]) and (org_points[i][2] == Point[2])):
-            index_Point = i                                   #Armazena o index do Point no org_points
-            index_Point = index_Point/(2*integ_config[1] + 1) #Corrige para a escala do grafico
-
-    #Inicializando vetores dos lambdas
-    array_LambS = []
-    array_LambF = []
-    array_LambZ = []
-
-    #Armazenando todos os valores dos lambdas:
-    for i in range(len(org_points)):
-        array_LambS.append(fun.lbdas(*org_points[i]))
-        array_LambF.append(fun.lbdaf(*org_points[i]))
-        array_LambZ.append(lambdz(*org_points[i], alpha))
-    
-    #X-AXIS#
-    #Inicializando lista
+    #Variavel de escala (0 a 1)
     k = []
+    c = 0  #Variavel de correcao de erro
+    tam = sum(len(branchei) for branchei in branches) #Tamanho total das branches
+    for i in range(len(branches)):
+        for _ in range(len(branches[i])):
+            c += 1
+            k.append(c/tam)                           #Reescala para o intervalo [0,1]
 
-    for i in range(2*integ_config[1] + 1):
-        k.append(i/(2*integ_config[1] + 1))
+    #Variaveis que irao armazenar os pontos
+    Lambda_S = []
+    Lambda_F = []
+    Lambda_Z = []
 
-    #Iniciando a figura
+    for i in range(len(branches)):            #Varre os indices das branches
+            for j in range(len(branches[i])): #Varre a i-esima branch
+                Lambda_S.append(lbdas(*branches[i][j]))
+                Lambda_F.append(lbdaf(*branches[i][j]))
+                Lambda_Z.append(lambdz(*branches[i][j], alpha))
+    
+    #Inicializo a figura
     plot.figure()
 
-    plot.axvline(x = index_Point, color = 'k', linestyle = '--')
-
-    #Plotando pontos
-    plot.plot(k, array_LambS, color = 'b', linestyle = '-', label = '\u03BBs')
-    plot.plot(k, array_LambF, color = 'r', linestyle = '-', label = '\u03BBf')
-    plot.plot(k, array_LambZ, color = 'purple', linestyle = '-', label = '\u03BBz')
+    plot.plot(k, Lambda_S, color = 'b', linestyle = '-', label = 'Lambda S')        #Plotagem das variaveis
+    plot.plot(k, Lambda_F, color = 'r', linestyle = '-', label = 'Lambda F')        #Plotagem das variaveis
+    plot.plot(k, Lambda_Z, color = 'magenta', linestyle = '-', label = 'Lambda S')  #Plotagem das variaveis
 
     plot.grid(True)
+    plot.legend()
     plot.xlabel("Eixo X - Passos")
     plot.ylabel("Eixo Y - Valores numéricos")
-
     plot.show()
-
-lamb_graph(0.04, [0.5, 0.45, 0.1], [0.01, 500])

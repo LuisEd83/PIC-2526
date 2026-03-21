@@ -10,21 +10,22 @@ Objetivos:
 #Bibliotecas
 import Functions as fun
 import _Branches as b
-import Auxiliar_Functions as af
+import Auxiliar_Functions as af 
+import Autovalues_graph as ag
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
-N = 1000        #Numero de realizacao de passo
-alpha = 0.01    #Variável de controle
-Num_z = 20      #Numero de curvas de nivel
+N = 500         #Numero de realizacao de passo
+alpha = 0.04    #Variável de controle
+Num_z = 10      #Numero de curvas de nivel
 
 sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
-U0 = [0.5, 0.3, 0.1]
+U0 = [0.5, 0.3, 0.3]
 
 U1 = [0.5, 0.1, 0.1] #Ponto importante
 
@@ -99,21 +100,40 @@ def Prism_plot(Point : list):
                 zorder = 4)        #Ordem de prioridade
 
     #Plotando o ponto inicial
-    ax.plot(*Point, 'ko')
+    ax.plot(*Point, 'ko', zorder = 5)
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS AUTOVALORES__________#
-    auto_branches = b.Branches_auto([h, N], Num_z, alpha)
+    auto_branches = b.Branches_auto([h, N], Num_z, alpha, 0, 1)
     auto_colors = b.Branches_auto_colors()
 
-    for i in range(len(auto_branches)):
-        for j in range(len(auto_branches[i])):  # ← já deve estar assim
-            seg = np.array(auto_branches[i][j])
+    if(af.branchSlow() and af.branchFast()):        #Plotagem dos dois ramos
+        for i in range(len(auto_branches)):
+            for j in range(len(auto_branches[i])):
+                seg = np.array(auto_branches[i][j])
+                ax.plot(seg[:, 0],
+                        seg[:, 1],
+                        seg[:, 2],
+                        color = auto_colors[j],
+                        linestyle = '-')
+    elif((not af.branchSlow()) and af.branchFast()): #Plotagem do ramo lambda_f == lambda_z
+        for i in range(len(auto_branches)):
+            seg = np.array(auto_branches[i][0])
             ax.plot(seg[:, 0],
                     seg[:, 1],
                     seg[:, 2],
-                    color = auto_colors[j],
+                    color = auto_colors[0],
+                    linestyle = '-')
+    elif(af.branchSlow() and (not af.branchFast())): #Plotagem do ramo lambda_s == lambda_z
+        for i in range(len(auto_branches)):
+            seg = np.array(auto_branches[i][1])
+            ax.plot(seg[:, 0],
+                    seg[:, 1],
+                    seg[:, 2],
+                    color = auto_colors[1],
                     linestyle = '-')
 
+
+    ag.lamb_graph(alpha, U0, [h, N])
 
     #Inicia plotagem
     plt.show()
