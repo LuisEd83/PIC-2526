@@ -13,13 +13,13 @@ import numpy as np
 
 #Definindo funcao para determinar se o usuário quer ver ou nao os pontos dentro do prisma
 def transparencia():
-    x = 1 #x = 1 para ver apenas os pontos dentro do prisma; x = 0 e para ver todos os pontos
+    x = 0 #x = 1 para ver apenas os pontos dentro do prisma; x = 0 e para ver todos os pontos
     return x
 
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
 #nivel lambda_s = lambda_z
 def branchSlow(): 
-    s = 1 #s = 1 para permitir que seja plotado o ramo
+    s = 0 #s = 1 para permitir que seja plotado o ramo
     return s
 
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de

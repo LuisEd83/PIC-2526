@@ -84,7 +84,6 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     #Inicializo a figura
     plot.figure()
 
-
     plot.axvline(x = dist, color = 'k', linestyle = '--', label = 'Ponto inicial')  #Plotagem da localização do Point
 
     plot.plot(k, Lambda_S, color = 'b', linestyle = '-', label = 'Lambda S')        #Plotagem das variaveis relacionadas a Lambda_S

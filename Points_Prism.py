@@ -18,9 +18,9 @@ import matplotlib.pyplot as plt
 
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
-N = 500         #Numero de realizacao de passo
+N = 1000         #Numero de realizacao de passo
 alpha = 0.04    #Variável de controle
-Num_z = 10      #Numero de curvas de nivel
+Num_z = 30      #Numero de curvas de nivel
 
 sqr3 = np.sqrt(3) 
 
@@ -31,10 +31,14 @@ U1 = [0.5, 0.1, 0.1] #Ponto importante
 
 U2 = [0.2, 0.4, 0.1] #Ponto inicial fora do prisma
 
-def if_pointIn(bar, Point : list):
-    if(bar):
-        return af.if_PointInEq(Point)
-    return af.if_PointInRet(Point)
+#Função responsavel por determinar o menor Z (altura)
+def argmin_branch(branches):
+    Zm = 0 #Menor Z (teorico)
+    for i in range(len(branches)):
+        for j in range(len(branches[i])):
+            if(branches[i][j][2] < Zm):
+                Zm = branches[i][j][2] #Troca o Zm para o novo ponto com altura menor
+    return Zm
 
 #Definindo a funcao principal de plot
 def Prism_plot(Point : list):
@@ -103,7 +107,8 @@ def Prism_plot(Point : list):
     ax.plot(*Point, 'ko', zorder = 5)
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS AUTOVALORES__________#
-    auto_branches = b.Branches_auto([h, N], Num_z, alpha, 0, 1)
+    base = argmin_branch(branches)
+    auto_branches = b.Branches_auto([h, N], Num_z, alpha, base, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
     if(af.branchSlow() and af.branchFast()):        #Plotagem dos dois ramos

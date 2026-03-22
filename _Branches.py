@@ -285,11 +285,11 @@ def Branches_point_colors(alpha, branches):
 def Branches_auto(bicetion_config : list, Num_z, alpha, base, altura):
 
     #Definindo intervalo
-    interval = [0.0, 1.0]
+    interval = [0, 1.0]
 
     #Definindo o z inicial (inicio da curva de nivel):
     zk = base
-    dz = altura/Num_z #Diferenca entre duas curvas de nivel
+    dz = (altura - base)/Num_z #Diferenca entre duas curvas de nivel
 
     #Definindo a lista que vai armazenar as Branchs
     Branch_list = [] #Vai armazenar as branches LambdaS com LambdaZ e LambdaF com LambdaZ
@@ -329,7 +329,7 @@ def Branches_auto(bicetion_config : list, Num_z, alpha, base, altura):
         points_s = nm.Bisection_method(interval, bicetion_config, lbdas, zk, alpha) #Armazena os pontos onde LambdaS - LambdaZ == 0
         points_f = nm.Bisection_method(interval, bicetion_config, lbdaf, zk, alpha) #Armazena os pontos onde LambdaF - LambdaZ == 0
         
-        points_s.insert(0, [0.0, 0.0, 0.0])
+        points_s.insert(0, [0.0, 0.0, zk])
 
         if(not baricentrica()):
             points_s.append([0.0, 1.0, zk])
