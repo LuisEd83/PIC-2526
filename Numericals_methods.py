@@ -116,5 +116,3 @@ def Bisection_method(interval : list, bisection_config : list, function, z, alph
         vk += h                                #Isso direciona o Metodo da bissecao para a proxima reta horizontal
 
     return Points
-    
-

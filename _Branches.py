@@ -284,9 +284,7 @@ def Branches_point_colors(alpha, branches):
 #   -> Um ramo relacionado a LAMBDA_F == LAMBDA_Z
 def Branches_auto(bicetion_config : list, Num_z, alpha, base, altura):
 
-    #Definindo intervalos
-    #interval_1 = [0.0, 0.6]
-    #interval_2 = [0.4, 1.0]
+    #Definindo intervalo
     interval = [0.0, 1.0]
 
     #Definindo o z inicial (inicio da curva de nivel):
