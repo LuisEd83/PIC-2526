@@ -15,12 +15,21 @@ Objetivo:
 1) Flags: Plotar todos os pontos // 
 """
 
-from Auxiliar_Functions import lambdz, transparencia
-from _Branches import Branches_point, Branches_point_colors
+from Auxiliar_Functions import lambdz, transparencia, if_PointInEq, if_PointInRet
+from _Branches import Branches_point
 from Functions import lbdaf, lbdas
+from Inicia import baricentrica
 
 import numpy as np
 import matplotlib.pyplot as plot
+
+def pointInP(Point):
+    if(not transparencia()):
+        return 1
+    if(baricentrica()):
+        return (if_PointInEq(Point) and (0.0 <= Point[2] <= 1.0))
+    else:
+        return (if_PointInRet(Point) and (0.0 <= Point[2] <= 1.0))
 
 def lamb_graph(alpha, Point : list, integ_config : list):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
@@ -56,24 +65,25 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     Lambda_F = []
     Lambda_Z = []
 
-    #Variavel para armazenar a branch e o indice na branch
-    local_point = []
-    for i, branch in enumerate(branches):
-         for j, p in enumerate(branch):
-             if(ponto_igual(p, Point)):     #Localiza o ponto dentre as branches
-                #i = branch; j = indice na branch i
-                local_point.append(i)
-                local_point.append(j)
+    if(pointInP(Point) or (not transparencia)):
+        #Variavel para armazenar a branch e o indice na branch
+        local_point = []
+        for i, branch in enumerate(branches):
+            for j, p in enumerate(branch):
+                if(ponto_igual(p, Point)):     #Localiza o ponto dentre as branches
+                    #i = branch; j = indice na branch i
+                    local_point.append(i)
+                    local_point.append(j)
 
-    dist = 0  #Variavel de distancia do primeiro ponto ate o Point 
-    if(local_point[0] == 0):
-        dist += local_point[1]
-    else:
-        for i in range(local_point[0]):
-            dist += len(branches[i])
-        dist += local_point[1] #Corrige a distancia 
+        dist = 0  #Variavel de distancia do primeiro ponto ate o Point 
+        if(local_point[0] == 0):
+            dist += local_point[1]
+        else:
+            for i in range(local_point[0]):
+                dist += len(branches[i])
+            dist += local_point[1] #Corrige a distancia 
 
-    dist /= tam   #Redimensiona a distancia para o intervalo [0, 1]
+        dist /= tam   #Redimensiona a distancia para o intervalo [0, 1]
 
     for i in range(len(branches)):            #Varre os indices das branches
         for j in range(len(branches[i])):     #Varre a i-esima branch
@@ -84,7 +94,8 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     #Inicializo a figura
     plot.figure()
 
-    plot.axvline(x = dist, color = 'k', linestyle = '--', label = 'Ponto inicial')  #Plotagem da localização do Point
+    if(pointInP(Point) or (not transparencia)):
+        plot.axvline(x = dist, color = 'k', linestyle = '--', label = 'Ponto inicial')  #Plotagem da localização do Point
 
     plot.plot(k, Lambda_S, color = 'b', linestyle = '-', label = 'Lambda S')        #Plotagem das variaveis relacionadas a Lambda_S
     plot.plot(k, Lambda_F, color = 'r', linestyle = '-', label = 'Lambda F')        #Plotagem das variaveis relacionadas a Lambda_F

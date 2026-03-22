@@ -87,5 +87,5 @@ def R(u, v, z, alpha): #Componente multiplo de k
     return D_r(u, v, z, alpha)/N(u, v, z, alpha)
 
 #Componentes do campo JUNTOS
-def campos(u, v, z):
-    return P(u, v, z), Q(u, v, z), R(u, v, z)
+def campos(u, v, z, alpha):
+    return [P(u, v, z, alpha), Q(u, v, z, alpha), R(u, v, z, alpha)]

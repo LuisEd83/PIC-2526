@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
-N = 1000         #Numero de realizacao de passo
+N = 500         #Numero de realizacao de passo
 alpha = 0.04    #Variável de controle
 Num_z = 30      #Numero de curvas de nivel
 
@@ -103,8 +103,20 @@ def Prism_plot(Point : list):
                 linestyle = '-',   #Tipo de linha (no caso sera a linha continua)
                 zorder = 4)        #Ordem de prioridade
 
+    #__________INICIALIZANDO PLOTAGEM DOS PONTOS RELACIONADA AO AUTOVALOR LAMBDA-Z__________#
     #Plotando o ponto inicial
-    ax.plot(*Point, 'ko', zorder = 5)
+    ax.plot(*Point, 'k.', zorder = 5)
+
+    marcados = b.andar_branches(Point, branches, passo = 10) #Criar uma lista de tuplas onde estas são (i,j) -> i = branch e j = posicao na branch
+    cor_pontos = []                                          #Armazena a cor do ponto
+    for i,j in marcados:
+        af.color_point(cor_pontos, branches[i][j], alpha)
+    
+    print(cor_pontos)
+
+    for l, (i, j) in enumerate(marcados):
+        ax.plot(*branches[i][j], color=cor_pontos[l], marker='.', zorder=5) #Plota o ponto marcado
+
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS AUTOVALORES__________#
     base = argmin_branch(branches)
@@ -138,9 +150,9 @@ def Prism_plot(Point : list):
                     linestyle = '-')
 
 
-    ag.lamb_graph(alpha, U0, [h, N])
+    ag.lamb_graph(alpha, Point, [h, N])
 
     #Inicia plotagem
     plt.show()
 
-Prism_plot(U0)
+Prism_plot(U2)

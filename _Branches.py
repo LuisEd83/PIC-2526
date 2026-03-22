@@ -22,17 +22,15 @@ import numpy as np
 def lambdz(u, v, z, alpha):
     return(fw(u, v, z)/(u + alpha*np.cos(z)))
 
+def pointInP(Point):
+    if(not transparencia()):
+        return 1
+    if(baricentrica()):
+        return (if_PointInEq(Point) and (0.0 <= Point[2] <= 1.0))
+    else:
+        return (if_PointInRet(Point) and (0.0 <= Point[2] <= 1.0))
 
 def Branches_point(alpha, Point : list, integ_config : list):
-
-    def pointInP(Point):
-        if(not transparencia()):
-            return 1
-
-        if(baricentrica()):
-            return (if_PointInEq(Point) and (0.0 <= Point[2] <= 1.0))
-        else:
-            return (if_PointInRet(Point) and (0.0 <= Point[2] <= 1.0))
 
     def indexs(array_org, lista_index : list, bool_value : bool, current_size, correc_error):
         #Condicao de parada
@@ -374,3 +372,56 @@ def Branches_auto_colors():
     colors.append('#C4A484')
 
     return colors
+
+#/////////////////////////////#/////////////////////////////#
+#Funcao que marca os pontos a cada x passos a partir do ponto inicial
+def andar_branches(Point, branches, passo):
+    def ponto_igual(p1, p2, tol=1e-12):
+        return np.allclose(p1, p2, atol=tol)
+
+    # Tenta localizar o ponto exato nas branches
+    local_point = []
+    for i, branch in enumerate(branches):
+        for j, p in enumerate(branch):
+            if ponto_igual(p, Point):
+                local_point = [i, j]
+                break
+        if local_point:
+            break
+
+    # Se não encontrou, busca o mais próximo
+    if not local_point:
+        melhor_i, melhor_j = None, None
+        melhor_dist = float('inf')
+        for i, branch in enumerate(branches):
+            for j, p in enumerate(branch):
+                dist = np.linalg.norm(np.array(p) - np.array(Point))
+                if dist < melhor_dist:
+                    melhor_dist = dist
+                    melhor_i, melhor_j = i, j
+        local_point = [melhor_i, melhor_j]
+
+    # Achata apenas os índices
+    flat = [(i, j) for i, branch in enumerate(branches) for j in range(len(branch))]
+
+    # Localiza o índice global
+    inicio_global = next(
+        (k for k, (i, j) in enumerate(flat) if i == local_point[0] and j == local_point[1]),
+        None
+    )
+
+    # Seleciona índices a cada 'passo', excluindo o ponto de partida
+    candidatos = flat[inicio_global % passo::passo]
+    candidatos = [(i, j) for (i, j) in candidatos 
+                  if not (i == local_point[0] and j == local_point[1])]
+
+    # Filtra conforme transparencia
+    point_indexes = []
+    if transparencia:
+        for (i, j) in candidatos:
+            if pointInP(branches[i][j]):
+                point_indexes.append((i, j))
+    else:
+        point_indexes = candidatos
+
+    return point_indexes
