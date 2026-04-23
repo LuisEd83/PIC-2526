@@ -1,0 +1,81 @@
+import includes._Branches as b
+import includes.Auxiliar_Functions as af
+import includes.Functions as fun
+
+import matplotlib.pyplot as plt
+
+#Possui as branches como parametro 
+def integralCurveWB(ax, branches, colors):
+    for i in range(len(branches)): #Esse laco irah criar as conexoes entre os pontos
+        ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
+                branches[i][:, 1], #Conjunto da componente Y da i-esima branch
+                branches[i][:, 2], #Conjunto da componente Z da i-esima branch
+                color = colors[i], #Cor da i-iesima branch
+                linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
+                #zorder = 4)        #Ordem de prioridade
+
+#Nao possui as branches como parametro (Calculo interno)
+def integralCurve(ax, alpha, Point, configCurve):
+    #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
+    import includes.Inicia as ini
+
+    #Variaveis de metodos numericos
+    h, N = configCurve
+
+    #__________IICIALIZANDO AMBIENTE 3D__________#
+
+    #mapeia para baricentrica ou não
+    mp = ini.baricentrica()
+
+    #Define as concentracoes minima e maxima
+    zmin, zmax = ini.concentrations() 
+
+    #Inicializando figura
+    ax = ini.ambiente3d()
+    ax.view_init(elev=30., azim=-130.) #Initial Camera Position
+
+    if(af.transparencia()):
+        #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
+        
+        #Vertices do triangulo
+        Gw, Go = 0, 0
+        Ww, Wo = 1, 0
+        Ow, Oo = 0, 1
+
+        # Mapeia para coordenadas baricentricas de mp = 1
+        G1, G2 = fun.map(Gw, Go, mp)
+        W1, W2 = fun.map(Ww, Wo, mp)
+        O1, O2 = fun.map(Ow, Oo, mp)
+
+        # Triangulo no plano cmin
+        ax.plot([G1,W1], [G2, W2], [zmin,zmin], 'k')
+        ax.plot([G1,O1], [G2, O2], [zmin,zmin], 'k')
+        ax.plot([W1,O1], [W2, O2], [zmin,zmin], 'k')
+
+        #Triangulo no plano c = cmax
+        ax.plot([G1,W1], [G2, W2], [zmax,zmax], 'k')
+        ax.plot([G1,O1], [G2, O2], [zmax,zmax], 'k')
+        ax.plot([W1,O1], [W2, O2], [zmax,zmax], 'k')
+
+        #Arestas verticais
+        ax.plot([G1,G1], [G2,G2], [zmin,zmax], 'k')
+        ax.plot([W1,W1], [W2,W2], [zmin,zmax], 'k')
+        ax.plot([O1,O1], [O2,O2], [zmin,zmax], 'k')
+
+        #Identificacao dos eixos
+        ax.set_xlabel('$u$')
+        ax.set_ylabel('$v$')
+        ax.set_zlabel('$z$')
+
+    branches = b.Branches_point(alpha, Point, [h, N]) #Branches
+    colors = b.Branches_point_colors(alpha, branches) #Cores das branches
+
+    for i in range(len(branches)): #Esse laco irah criar as conexoes entre os pontos
+        ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
+                branches[i][:, 1], #Conjunto da componente Y da i-esima branch
+                branches[i][:, 2], #Conjunto da componente Z da i-esima branch
+                color = colors[i], #Cor da i-iesima branch
+                linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
+                #zorder = 4)        #Ordem de prioridade
+
+    plt.show()

@@ -15,10 +15,10 @@ Objetivo:
 1) Flags: Plotar todos os pontos // 
 """
 
-from Auxiliar_Functions import lambdz, transparencia, if_PointInEq, if_PointInRet
-from _Branches import Branches_point
-from Functions import lbdaf, lbdas
-from Inicia import baricentrica
+from includes.Auxiliar_Functions import lambdz, transparencia, if_PointInEq, if_PointInRet
+from includes._Branches import Branches_point
+from includes.Functions import lbdaf, lbdas
+from includes.Inicia import baricentrica
 
 import numpy as np
 import matplotlib.pyplot as plot
@@ -33,7 +33,7 @@ def pointInP(Point):
 
 def lamb_graph(alpha, Point : list, integ_config : list):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
-    import Functions as fun
+    import includes.Functions as fun
     
     def ponto_igual(p1, p2, tol=1e-9):
         return np.allclose(p1, p2, atol=tol) 

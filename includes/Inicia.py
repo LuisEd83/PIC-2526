@@ -11,7 +11,7 @@ ambiente3d(): Seta o ambiente 3d e devolve "axes" para plotagem 3d
 """
 import matplotlib.pyplot as plt
 
-import Functions as fun
+import includes.Functions as fun
 
 def dominio():
 # Define uma regiao R retangular para calculos.
@@ -49,7 +49,7 @@ def viscosidades(): #Viscosidades da agua, do oleo e do gas
     return(muw0, muo, mug)
     
 def baricentrica(): #Mapeamento ou nao?
-    x = 1# x = 1 se quiser coordenadas baricentricas
+    x = 0# x = 1 se quiser coordenadas baricentricas
     return(x)
     
 def DadosIntegracao(): #Para integracao dos contatos

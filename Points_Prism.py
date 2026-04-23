@@ -8,10 +8,12 @@ Objetivos:
 """
 
 #Bibliotecas
-import Functions as fun
-import _Branches as b
-import Auxiliar_Functions as af 
+import includes.Functions as fun
+import includes._Branches as b
+import includes.Auxiliar_Functions as af 
 import Autovalues_graph as ag
+import Curva_nivel as cn
+import Integral_curve as ic
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,13 +21,13 @@ import matplotlib.pyplot as plt
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
 N = 500         #Numero de realizacao de passo
-alpha = 0.04    #Variável de controle
-Num_z = 30      #Numero de curvas de nivel
+alpha = 0.1    #Variável de controle
+Num_z = 20      #Numero de curvas de nivel
 
 sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
-U0 = [0.5, 0.3, 0.3]
+U0 = [0.2, 0.6, 0.2]
 
 U1 = [0.5, 0.1, 0.1] #Ponto importante
 
@@ -43,7 +45,7 @@ def argmin_branch(branches):
 #Definindo a funcao principal de plot
 def Prism_plot(Point : list):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
-    import Inicia as ini
+    import includes.Inicia as ini
 
     #__________IICIALIZANDO AMBIENTE 3D__________#
 
@@ -56,7 +58,7 @@ def Prism_plot(Point : list):
     #Inicializando figura
     ax = ini.ambiente3d()
     ax.view_init(elev=30., azim=-130.) #Initial Camera Position
-    
+
     if(af.transparencia()):
         #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
         
@@ -90,69 +92,34 @@ def Prism_plot(Point : list):
         ax.set_ylabel('$v$')
         ax.set_zlabel('$z$')
 
-    #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
-    
+    #Variavel que armazena as branches
     branches = b.Branches_point(alpha, Point, [h, N]) #Branches
-    colors = b.Branches_point_colors(alpha, branches) #Cores das branches
+    colors = b.Branches_point_colors(alpha, branches)
 
-    for i in range(len(branches)): #Esse laco irah criar as conexoes entre os pontos
-        ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
-                branches[i][:, 1], #Conjunto da componente Y da i-esima branch
-                branches[i][:, 2], #Conjunto da componente Z da i-esima branch
-                color = colors[i], #Cor da i-iesima branch
-                linestyle = '-',   #Tipo de linha (no caso sera a linha continua)
-                zorder = 4)        #Ordem de prioridade
-
-    #__________INICIALIZANDO PLOTAGEM DOS PONTOS RELACIONADA AO AUTOVALOR LAMBDA-Z__________#
-    #Plotando o ponto inicial
-    ax.plot(*Point, 'k.', zorder = 5)
-
-    marcados = b.andar_branches(Point, branches, passo = 10) #Criar uma lista de tuplas onde estas são (i,j) -> i = branch e j = posicao na branch
-    cor_pontos = []                                          #Armazena a cor do ponto
-    for i,j in marcados:
-        af.color_point(cor_pontos, branches[i][j], alpha)
+    #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
+    ic.integralCurveWB(ax, branches, colors)
     
-    print(cor_pontos)
 
-    for l, (i, j) in enumerate(marcados):
-        ax.plot(*branches[i][j], color=cor_pontos[l], marker='.', zorder=5) #Plota o ponto marcado
-
-
-    #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS AUTOVALORES__________#
+    #Variaveis para grafico de autovalores
     base = argmin_branch(branches)
     auto_branches = b.Branches_auto([h, N], Num_z, alpha, base, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
-    if(af.branchSlow() and af.branchFast()):        #Plotagem dos dois ramos
-        for i in range(len(auto_branches)):
-            for j in range(len(auto_branches[i])):
-                seg = np.array(auto_branches[i][j])
-                ax.plot(seg[:, 0],
-                        seg[:, 1],
-                        seg[:, 2],
-                        color = auto_colors[j],
-                        linestyle = '-')
-    elif((not af.branchSlow()) and af.branchFast()): #Plotagem do ramo lambda_f == lambda_z
-        for i in range(len(auto_branches)):
-            seg = np.array(auto_branches[i][0])
-            ax.plot(seg[:, 0],
-                    seg[:, 1],
-                    seg[:, 2],
-                    color = auto_colors[0],
-                    linestyle = '-')
-    elif(af.branchSlow() and (not af.branchFast())): #Plotagem do ramo lambda_s == lambda_z
-        for i in range(len(auto_branches)):
-            seg = np.array(auto_branches[i][1])
-            ax.plot(seg[:, 0],
-                    seg[:, 1],
-                    seg[:, 2],
-                    color = auto_colors[1],
-                    linestyle = '-')
-
+    #__________INICIALIZANDO PLOTAGEM DOS PONTOS RELACIONADA AO AUTOVALOR LAMBDA-Z__________#
+    cn.levelCurveWB(ax, auto_branches, auto_colors)
 
     ag.lamb_graph(alpha, Point, [h, N])
 
     #Inicia plotagem
     plt.show()
 
-Prism_plot(U2)
+Prism_plot(U0)
+
+
+#Pontos utilizados (e suas combinações):
+#[0.4, 0.4, 0.1] com Lambda_S = Lambda_Z
+#[0.8, 0.15, 0.3] com Lambda_F = Lambda_Z
+#
+#[0.2, 0.6, 0.3] com gráfico de autovalores
+#[0.2, 0.4, 0.1] com gráfico de autovalores
+#[0.7, 0.25, 0.1] com gráfico de autovalores

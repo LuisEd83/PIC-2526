@@ -38,7 +38,7 @@ eigvls(u,v,c): ambos autovalores (slow e fast)
 """
 
 import numpy as np  #funcoes matemáticas
-import Inicia as ini
+import includes.Inicia as ini
 
 # Concentracoes iniciais
 cmin, cmax = ini.concentrations()

@@ -6,8 +6,8 @@ Objetivo:
 
 """
 
-import Numericals_methods as nm
-import Functions as fun
+import includes.Numericals_methods as nm
+import includes.Functions as fun
 
 import numpy as np
 
@@ -28,6 +28,10 @@ def branchFast():
     f = 1 #s = 1 para permitir que seja plotado o ramo
     return f
 
+def points_curv(): #Esta funcao habilita os pontos na curva integral.
+    x = 1   #x = 1 para habilitar
+    return x
+
 ##############################################################
 #Derivada da funcao continua e crescente no intervalo [0,1]
 def az(z): #Da/dz
@@ -38,7 +42,7 @@ def lambdz(u, v, z, alpha):
 
 #derivada de lambdz
 def Dlambdz(u, v, z, alpha):
-    from Campo_Ez import campos
+    from includes.Campo_Ez import campos
 
     #Calculando gradiente:
     pc = (fun.Du(u, v, z) * (u + alpha*az(z)) - fun.fw(u, v, z))/((u+alpha*az(z))**2)                       #Primeira componente

@@ -10,7 +10,7 @@ pela biblioteca Functions.
 Com isto concluido, poderemos passar para proxima etapa: integrar as componentes do campo por um metodo de integracao  
 """
 
-import Functions as fun
+import includes.Functions as fun
 
 from numpy import sqrt, cos
 

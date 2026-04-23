@@ -6,10 +6,10 @@ Objetivo:
 dos compoentes do campo a partir de um ponto inicial escolhido.
 """
 
-import Campo_Ez as df
-from Functions import lbdc
-from Auxiliar_Functions import lambdz
-from Inicia import baricentrica
+import includes.Campo_Ez as df
+from includes.Functions import lbdc
+from includes.Auxiliar_Functions import lambdz
+from includes.Inicia import baricentrica
 from numpy import array, ceil, abs, log10, sqrt
 
 #Definindo uma funcao que implementa o metodo de Euler para integracao

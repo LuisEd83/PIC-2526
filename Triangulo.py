@@ -11,8 +11,8 @@ Desenha o triangulo de saturacoes independente do nivel c
 import matplotlib.pyplot as plt #Para plotagem de graficos
 #from mpl_toolkits.mplot3d import axes3d
 
-import Functions as fun
-import Inicia as ini
+import includes.Functions as fun
+import includes.Inicia as ini
 
 
 #if using a Jupyter notebook, include:

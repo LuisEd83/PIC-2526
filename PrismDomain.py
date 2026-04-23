@@ -10,8 +10,8 @@ Serah que esta versao pode ser eliminada no caso do laptop?
 Ou deverao ser feitas adaptacoes com uma variavel booleana (laptop ou desktop)
 """
 
-import Functions as fun
-import Inicia as ini
+import includes.Functions as fun
+import includes.Inicia as ini
 
 #Testando se é possível transformar isto em uma funcao
 

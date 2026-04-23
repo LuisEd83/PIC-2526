@@ -9,10 +9,10 @@ Os ramos devem:
 
 """
 
-import Numericals_methods as nm
-from Inicia import baricentrica
-from Functions import fw, lbdas, lbdaf 
-from Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet
+import includes.Numericals_methods as nm
+from includes.Inicia import baricentrica
+from includes.Functions import fw, lbdas, lbdaf 
+from includes.Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet
 
 import numpy as np
 
