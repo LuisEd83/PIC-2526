@@ -40,29 +40,6 @@ def az(z): #Da/dz
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))
 
-#derivada de lambdz
-def Dlambdz(u, v, z, alpha):
-    from includes.Campo_Ez import campos
-
-    #Calculando gradiente:
-    pc = (fun.Du(u, v, z) * (u + alpha*az(z)) - fun.fw(u, v, z))/((u+alpha*az(z))**2)                       #Primeira componente
-    sc = (fun.Dv(u, v, z))/(u + alpha*az(z))                                                                #Segunda componente
-    tc = (fun.Dc(u, v, z) * (u + alpha*az(z)) + fun.fw(u, v, z) * (alpha*np.sin(z)))/((u + alpha*az(z))**2) #Terceira componente
-
-    #Extraindo campos (componentes de direção)
-    camps = campos(u, v, z, alpha)
-
-    #O return sera o produto intero entre o gradiente e a direcao da curva integral (que eh, no fim das contas, os campos)
-    return (pc*camps[0] + sc*camps[1] + tc*camps[2])
-
-def color_point(colors : list, Point, alpha): #Determina a cor do ponto a partir da derivada do Lambda_z
-    if(Dlambdz(*Point, alpha) > 0):
-        colors.append('r')
-    elif(Dlambdz(*Point, alpha) < 0):
-        colors.append('b')
-    else:
-        colors.append('white')
-
 ##############################################################
 #Definindo uma constante para a funcao posterior
 sqr3 = np.sqrt(3)

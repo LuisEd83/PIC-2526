@@ -33,15 +33,6 @@ U1 = [0.5, 0.1, 0.1] #Ponto importante
 
 U2 = [0.2, 0.4, 0.1] #Ponto inicial fora do prisma
 
-#Função responsavel por determinar o menor Z (altura)
-def argmin_branch(branches):
-    Zm = 0 #Menor Z (teorico)
-    for i in range(len(branches)):
-        for j in range(len(branches[i])):
-            if(branches[i][j][2] < Zm):
-                Zm = branches[i][j][2] #Troca o Zm para o novo ponto com altura menor
-    return Zm
-
 #Definindo a funcao principal de plot
 def Prism_plot(Point : list):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
@@ -97,11 +88,11 @@ def Prism_plot(Point : list):
     colors = b.Branches_point_colors(alpha, branches)
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
-    ic.integralCurveWB(ax, branches, colors)
+    ic.integralCurveWB(ax, Point, branches, colors)
     
 
     #Variaveis para grafico de autovalores
-    base = argmin_branch(branches)
+    base = cn.argmin_branch(branches)
     auto_branches = b.Branches_auto([h, N], Num_z, alpha, base, altura = 1)
     auto_colors = b.Branches_auto_colors()
 

@@ -31,6 +31,27 @@ def pointInP(Point):
     else:
         return (if_PointInRet(Point) and (0.0 <= Point[2] <= 1.0))
 
+def merge_continuous_branches(branches, tol=1e-9):
+    """Agrupa branches contíguas em segmentos maiores para plotagem contínua."""
+    def ponto_igual(p1, p2):
+        return np.allclose(p1, p2, atol=tol)
+
+    segments = []
+    current = list(branches[0])
+
+    for i in range(1, len(branches)):
+        if ponto_igual(current[-1], branches[i][0]):
+            #Contínua: anexa (sem repetir o ponto de junção)
+            current.extend(branches[i][1:])
+        else:
+            #Descontinuidade: fecha o segmento atual e abre um novo
+            segments.append(current)
+            current = list(branches[i])
+
+    segments.append(current)  #fecha o último segmento
+    return segments
+
+
 def lamb_graph(alpha, Point : list, integ_config : list):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import includes.Functions as fun
@@ -40,6 +61,7 @@ def lamb_graph(alpha, Point : list, integ_config : list):
 
     #Extraio as branches:
     branches = Branches_point(alpha, Point, integ_config) #Ramos (conjunto de pontos)
+    segments = merge_continuous_branches(branches)        #Branches de ramos contínuos
 
     #Limpando os pontos iguais nas branches:
     j = 1
@@ -59,11 +81,6 @@ def lamb_graph(alpha, Point : list, integ_config : list):
         for _ in range(len(branches[i])):
             c += 1
             k.append(c/tam)                           #Reescala para o intervalo [0,1]
-
-    #Variaveis que irao armazenar os pontos
-    Lambda_S = []
-    Lambda_F = []
-    Lambda_Z = []
 
     if(pointInP(Point) or (not transparencia)):
         #Variavel para armazenar a branch e o indice na branch
@@ -85,24 +102,36 @@ def lamb_graph(alpha, Point : list, integ_config : list):
 
         dist /= tam   #Redimensiona a distancia para o intervalo [0, 1]
 
-    for i in range(len(branches)):            #Varre os indices das branches
-        for j in range(len(branches[i])):     #Varre a i-esima branch
-            Lambda_S.append(lbdas(*branches[i][j]))
-            Lambda_F.append(lbdaf(*branches[i][j]))
-            Lambda_Z.append(lambdz(*branches[i][j], alpha))
-    
-    #Inicializo a figura
-    plot.figure()
+    fig, ax = plot.subplots()
 
     if(pointInP(Point) or (not transparencia)):
-        plot.axvline(x = dist, color = 'k', linestyle = '--', label = 'Ponto inicial')  #Plotagem da localização do Point
+        ax.axvline(x=dist, color='k', linestyle='--', label='Ponto inicial')
 
-    plot.plot(k, Lambda_S, color = 'b', linestyle = '-', label = 'Lambda S')        #Plotagem das variaveis relacionadas a Lambda_S
-    plot.plot(k, Lambda_F, color = 'r', linestyle = '-', label = 'Lambda F')        #Plotagem das variaveis relacionadas a Lambda_F
-    plot.plot(k, Lambda_Z, color = 'magenta', linestyle = '-', label = 'Lambda Z')  #Plotagem das variaveis relacionadas a Lambda_Z
+    k_offset = 0  #acumulador de posição global
 
-    plot.grid(True)
-    plot.legend()
-    plot.xlabel("Eixo X - Passos")
-    plot.ylabel("Eixo Y - Valores numéricos")
+    for i, segment in enumerate(segments):
+        n = len(segment)
+        
+        #Fatia do eixo k correspondente a esta branch
+        k_branch = k[k_offset : k_offset + n]
+        k_offset += n
+
+        #Calcula os autovalores só desta branch
+        LS = [lbdas(*p) for p in segment]
+        LF = [lbdaf(*p) for p in segment]
+        LZ = [lambdz(*p, alpha) for p in segment]
+
+        #Só a primeira branch recebe label (evita duplicatas na legenda)
+        label_s = 'Lambda S' if i == 0 else '_nolegend_'
+        label_f = 'Lambda F' if i == 0 else '_nolegend_'
+        label_z = 'Lambda Z' if i == 0 else '_nolegend_'
+
+        ax.plot(k_branch, LS, color='b',       linestyle='-', label=label_s)
+        ax.plot(k_branch, LF, color='r',       linestyle='-', label=label_f)
+        ax.plot(k_branch, LZ, color='magenta', linestyle='-', label=label_z)
+
+    ax.grid(True)
+    ax.legend()
+    ax.set_xlabel("Eixo X - Passos")
+    ax.set_ylabel("Eixo Y - Valores numéricos")
     plot.show()

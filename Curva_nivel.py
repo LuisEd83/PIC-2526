@@ -41,7 +41,7 @@ def levelCurveWB(ax, auto_branches, auto_colors):
                     color = auto_colors[1],
                     linestyle = '-')
 
-def levelCurve(ax, alpha, Point, curveConfig, numCortes):
+def levelCurve(alpha, Point, curveConfig, numCortes):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import includes.Inicia as ini
 

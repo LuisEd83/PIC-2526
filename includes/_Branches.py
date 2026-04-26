@@ -49,7 +49,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
                 array_temp = array_org[i+1:].copy()                                              #Cria uma copia do array a partir de um indice i
                 return indexs(array_temp, lista_index, bool_value, current_size, correc_error)
 
-    def lambd_comp(Point : list, alpha):
+    def lambd_comp(Point : list, alpha):#Compara os valores dos lambdas
         #Definindo valores e comparando:
         lambdaS_value = lbdas(*Point)
         lambdaF_value = lbdaf(*Point)
@@ -163,8 +163,6 @@ def Branches_point(alpha, Point : list, integ_config : list):
         if(inside):
             branches_list.append(org_points[p:])    #Adicionando o ultimo segmento se a ultima iteracao fizer Inside = True
 
-        #for i in range(len(branches_list)):
-        #    print(f"Branch {i+1}: {branches_list[i]} \n")
 
         if(pointInP(Point)):
             #Localizando a branch e o indice do Point
@@ -243,6 +241,9 @@ def Branches_point(alpha, Point : list, integ_config : list):
             p = points_indexs[i]
         
         branches_list.append(org_points[p:])
+
+    for i in range(len(branches_list)):
+        print(f"Branch {i+1}: {branches_list[i]} \n")
 
     return branches_list #retorna como lista, para melhor eficiencia
 

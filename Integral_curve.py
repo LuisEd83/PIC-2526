@@ -2,10 +2,10 @@ import includes._Branches as b
 import includes.Auxiliar_Functions as af
 import includes.Functions as fun
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plot
 
 #Possui as branches como parametro 
-def integralCurveWB(ax, branches, colors):
+def integralCurveWB(ax, Point, branches, colors):
     for i in range(len(branches)): #Esse laco irah criar as conexoes entre os pontos
         ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
                 branches[i][:, 1], #Conjunto da componente Y da i-esima branch
@@ -14,8 +14,10 @@ def integralCurveWB(ax, branches, colors):
                 linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
                 #zorder = 4)        #Ordem de prioridade
 
+    ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k')
+
 #Nao possui as branches como parametro (Calculo interno)
-def integralCurve(ax, alpha, Point, configCurve):
+def integralCurve(alpha, Point, configCurve):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import includes.Inicia as ini
 
@@ -78,4 +80,7 @@ def integralCurve(ax, alpha, Point, configCurve):
                 linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
                 #zorder = 4)        #Ordem de prioridade
 
-    plt.show()
+    
+    ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k') #Corrigir isso aqui.
+
+    plot.show()
