@@ -19,13 +19,13 @@ def transparencia():
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
 #nivel lambda_s = lambda_z
 def branchSlow(): 
-    s = 1 #s = 1 para permitir que seja plotado o ramo
+    s = 0 #s = 1 para permitir que seja plotado o ramo
     return s
 
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
 #nivel lambda_f = lambda_z
 def branchFast(): 
-    f = 1 #s = 1 para permitir que seja plotado o ramo
+    f = 0 #s = 1 para permitir que seja plotado o ramo
     return f
 
 def points_curv(): #Esta funcao habilita os pontos na curva integral.
@@ -101,3 +101,80 @@ def Points_Filter(array, bar, N):
                 Array_pc.append(array[i])
     
     return np.array(Array_pc, float)
+
+#####################################################################
+#Defininco funcao que retorna a cor do ponto
+def colorPoint(alpha, point):
+        lambdaS_value = fun.lbdas(*point)
+        lambdaF_value = fun.lbdaf(*point)
+        lambdaZ_value = lambdz(*point, alpha)
+        if((lambdaZ_value < lambdaF_value < lambdaS_value) or (lambdaZ_value < lambdaS_value < lambdaF_value)):
+            return 'b'
+        elif((lambdaS_value < lambdaZ_value < lambdaF_value) or (lambdaF_value < lambdaZ_value < lambdaS_value)):
+            return 'g' #Adiciona a cor Vermelha
+        elif((lambdaF_value < lambdaS_value < lambdaZ_value) or (lambdaS_value < lambdaF_value < lambdaZ_value)):
+            return 'r' #Adiciona a cor Roxa
+        else:
+            return 'k'
+        
+#Funcao que plota um cone - substtuindo a necessidade de plotar um vetor
+def plotCone(ax, origin, direction, color, height=0.05, radius=0.015, opacity=1.0, n_theta=12):
+    origin    = np.array(origin,    dtype=float)
+    direction = np.array(direction, dtype=float)
+
+    norm = np.linalg.norm(direction)
+    if norm == 0:
+        return
+    d = direction / norm
+
+    perp = np.array([1, 0, 0]) if abs(d[0]) < 0.9 else np.array([0, 1, 0])
+    u = np.cross(d, perp);  u /= np.linalg.norm(u)
+    v = np.cross(d, u);     v /= np.linalg.norm(v)
+
+    apex        = origin + d * (height / 2)
+    base_center = origin - d * (height / 2)
+
+    theta = np.linspace(0, 2 * np.pi, n_theta)
+    ring  = base_center[:, None] + radius * (np.outer(u, np.cos(theta))
+                                           + np.outer(v, np.sin(theta)))
+
+    # Superfície lateral + tampa em um único plot_surface
+    # Empilha: [apex_row, ring] → plot_surface interpola entre eles
+    apex_row = np.tile(apex[:, None], (1, n_theta))  # repete apex n_theta vezes
+    X = np.vstack([apex_row[0], ring[0]])
+    Y = np.vstack([apex_row[1], ring[1]])
+    Z = np.vstack([apex_row[2], ring[2]])
+
+    ax.plot_surface(X, Y, Z, color=color, alpha=opacity, linewidth=0,
+                    antialiased=False, shade=True)  # antialiased=False é mais rápido
+
+
+#Funcao que seleciona os pontos de forma simetrica 
+def stride_sample_symmetric(points, delta):
+    """
+    Amostra `points` simetricamente a partir do ponto de maior z,
+    percorrendo para frente (+delta) e para tras (-delta).
+    Retorna lista ordenada (de trás para frente).
+    """
+    if len(points) == 0:
+        return []
+
+    # Acha o índice do ponto com maior z (índice 2)
+    peak_idx = max(range(len(points)), key=lambda i: points[i][2])
+
+    # Percorre para trás (peak → 0)
+    backward = list(range(peak_idx, -1, -delta))
+    # Percorre para frente (peak → fim)
+    forward  = list(range(peak_idx, len(points), delta))
+
+    # Une, remove duplicata do peak e ordena
+    indices = sorted(set(backward + forward))
+    return [points[i] for i in indices]
+
+#Funcao que remove pontos duplicados consecutivos de branches, ou seja, retira a conexao que ha entre duas branches
+def remove_consecutive_duplicates(points, tol=1e-9):
+    unique = [points[0]]
+    for p in points[1:]:
+        if not np.allclose(p, unique[-1], atol=tol):
+            unique.append(p)
+    return unique

@@ -12,7 +12,7 @@ import includes.Functions as fun
 import includes._Branches as b
 import includes.Auxiliar_Functions as af 
 import Autovalues_graph as ag
-import Curva_nivel as cn
+import Coincidence_surfaces as cs
 import Integral_curve as ic
 
 import numpy as np
@@ -21,17 +21,16 @@ import matplotlib.pyplot as plt
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
 N = 500         #Numero de realizacao de passo
-alpha = 0.1    #Variável de controle
+alpha = 0.01    #Variável de controle
 Num_z = 20      #Numero de curvas de nivel
 
 sqr3 = np.sqrt(3) 
 
 #Definindo o ponto inicial para teste
-U0 = [0.2, 0.6, 0.2]
-
+U0 = [0.4, 0.3, 0.2]
 U1 = [0.5, 0.1, 0.1] #Ponto importante
 
-U2 = [0.2, 0.4, 0.1] #Ponto inicial fora do prisma
+U2 = [0.6, 0.3, 0.2] #Ponto inicial fora do prisma
 
 #Definindo a funcao principal de plot
 def Prism_plot(Point : list):
@@ -88,23 +87,23 @@ def Prism_plot(Point : list):
     colors = b.Branches_point_colors(alpha, branches)
 
     #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
-    ic.integralCurveWB(ax, Point, branches, colors)
+    ic.integralCurveWB(ax, Point, alpha, branches, colors)
     
 
     #Variaveis para grafico de autovalores
-    base = cn.argmin_branch(branches)
+    base = cs.argmin_branch(branches)
     auto_branches = b.Branches_auto([h, N], Num_z, alpha, base, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
     #__________INICIALIZANDO PLOTAGEM DOS PONTOS RELACIONADA AO AUTOVALOR LAMBDA-Z__________#
-    cn.levelCurveWB(ax, auto_branches, auto_colors)
+    cs.levelCurveWB(ax, auto_branches, auto_colors)
 
     ag.lamb_graph(alpha, Point, [h, N])
 
     #Inicia plotagem
     plt.show()
 
-Prism_plot(U0)
+Prism_plot(U2)
 
 
 #Pontos utilizados (e suas combinações):

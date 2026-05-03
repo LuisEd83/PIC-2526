@@ -2,10 +2,12 @@ import includes._Branches as b
 import includes.Auxiliar_Functions as af
 import includes.Functions as fun
 
+import LambdaZ_vec as lv
 import matplotlib.pyplot as plot
 
 #Possui as branches como parametro 
-def integralCurveWB(ax, Point, branches, colors):
+#Eh utilizada no Points_prism.py
+def integralCurveWB(ax, Point, alpha, branches, colors):
     for i in range(len(branches)): #Esse laco irah criar as conexoes entre os pontos
         ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
                 branches[i][:, 1], #Conjunto da componente Y da i-esima branch
@@ -15,6 +17,9 @@ def integralCurveWB(ax, Point, branches, colors):
                 #zorder = 4)        #Ordem de prioridade
 
     ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k')
+    
+    lv.plotVecsLambdaZWB(ax, alpha, branches, 5) #Plotagem dos vetores
+
 
 #Nao possui as branches como parametro (Calculo interno)
 def integralCurve(alpha, Point, configCurve):
@@ -81,6 +86,8 @@ def integralCurve(alpha, Point, configCurve):
                 #zorder = 4)        #Ordem de prioridade
 
     
-    ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k') #Corrigir isso aqui.
+    ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k')
 
     plot.show()
+
+integralCurve(0.1, [0.4, 0.3, 0.2], [0.01, 500])

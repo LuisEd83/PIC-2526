@@ -12,26 +12,9 @@ import includes.Inicia as ini
 
 import numpy as np
 
-def plotVec(ax, alpha, p0, p1): #Suponto p1 o sucessor de p0
-    import includes.Auxiliar_Functions as af 
-    du, dv, dz = p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]   #deslocamentos (vetor que aponta de p0 para p1)
-    if(af.lambdz(*p1, alpha) > af.lambdz(*p0, alpha)):
-        ax.quiver(p0[0], p0[1], p0[2], du, dv, dz, color = "r")
-    else:
-        ax.quiver(p1[0], p1[1], p1[2], -du, -dv, -dz, color = "b")
-
-def stride_sample_gen(points, step): #Seleciona os pontos com uma distancia (na lista) fixa
-    for i in range(0, len(points), step):
-        yield points[i]
-
-def remove_consecutive_duplicates(points, tol=1e-9):
-    unique = [points[0]]
-    for p in points[1:]:
-        if not np.allclose(p, unique[-1], atol=tol):
-            unique.append(p)
-    return unique
-
 def plotVecsLambdaZWB(ax, alpha, branches, delta):
+    import includes.Auxiliar_Functions as af
+
     def is_continuous(p_last, p_first, tol=1e-2):
         return np.allclose(p_last, p_first, atol=tol)
 
@@ -52,11 +35,16 @@ def plotVecsLambdaZWB(ax, alpha, branches, delta):
 
     #Plota os vetores para cada segmento isoladamente
     for segment in segments:
-        flat = remove_consecutive_duplicates(segment)
-        sampled = list(stride_sample_gen(flat, delta))
+        flat    = af.remove_consecutive_duplicates(segment)
+        sampled = af.stride_sample_symmetric(flat, delta)
 
         for i in range(len(sampled) - 1):
-            plotVec(ax, alpha, sampled[i], sampled[i+1])
+            if (not(i % 2)):
+                d = np.array(sampled[i+1]) - np.array(sampled[i])
+                if af.lambdz(*sampled[i], alpha) > af.lambdz(*sampled[i+1], alpha):
+                    af.plotCone(ax, sampled[i], -d, af.colorPoint(alpha, sampled[i]))
+                else:
+                    af.plotCone(ax, sampled[i], d, af.colorPoint(alpha, sampled[i]))
 
 def plotVecsLambdaZ(alpha, Point, integConfig, delta):
     import includes.Auxiliar_Functions as af
@@ -131,10 +119,15 @@ def plotVecsLambdaZ(alpha, Point, integConfig, delta):
 
     #Plota os vetores para cada segmento isoladamente
     for segment in segments:
-        flat = remove_consecutive_duplicates(segment)
-        sampled = list(stride_sample_gen(flat, delta))
+        flat    = af.remove_consecutive_duplicates(segment)
+        sampled = af.stride_sample_symmetric(flat, delta)
 
         for i in range(len(sampled) - 1):
-            plotVec(ax, alpha, sampled[i], sampled[i+1])
-    
+            if (not(i % 2)):
+                d = np.array(sampled[i+1]) - np.array(sampled[i])
+                if af.lambdz(*sampled[i], alpha) > af.lambdz(*sampled[i+1], alpha):
+                    af.plotCone(ax, sampled[i], -d, af.colorPoint(alpha, sampled[i]))
+                else:
+                    af.plotCone(ax, sampled[i], d, af.colorPoint(alpha, sampled[i]))
+
     plt.show()

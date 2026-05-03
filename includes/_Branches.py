@@ -242,8 +242,8 @@ def Branches_point(alpha, Point : list, integ_config : list):
         
         branches_list.append(org_points[p:])
 
-    for i in range(len(branches_list)):
-        print(f"Branch {i+1}: {branches_list[i]} \n")
+    #for i in range(len(branches_list)):
+    #    print(f"Branch {i+1}: {branches_list[i]} \n")
 
     return branches_list #retorna como lista, para melhor eficiencia
 

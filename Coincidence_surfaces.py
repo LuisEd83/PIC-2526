@@ -41,7 +41,7 @@ def levelCurveWB(ax, auto_branches, auto_colors):
                     color = auto_colors[1],
                     linestyle = '-')
 
-def levelCurve(alpha, Point, curveConfig, numCortes):
+def levelCurve(alpha, curveConfig, numCortes):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import includes.Inicia as ini
 
@@ -93,9 +93,9 @@ def levelCurve(alpha, Point, curveConfig, numCortes):
         ax.set_zlabel('$z$')
     
     #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS AUTOVALORES__________#
-    branches = b.Branches_point(alpha, Point, [h, N])
-    base = argmin_branch(branches)
-    auto_branches = b.Branches_auto([h, N], numCortes, alpha, base, altura = 1)
+    #branches = b.Branches_point(alpha, Point, [h, N])
+    #base = argmin_branch(branches)
+    auto_branches = b.Branches_auto([h, N], numCortes, alpha, base = 0, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
     if(af.branchSlow() and af.branchFast()):        #Plotagem dos dois ramos
@@ -127,3 +127,4 @@ def levelCurve(alpha, Point, curveConfig, numCortes):
     #Inicia plotagem
     plt.show()
 
+levelCurve(0.1, [0.01, 500], 10)
