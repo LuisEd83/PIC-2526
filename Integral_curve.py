@@ -7,7 +7,7 @@ import matplotlib.pyplot as plot
 
 #Possui as branches como parametro 
 #Eh utilizada no Points_prism.py
-def integralCurveWB(ax, Point, alpha, branches, colors):
+def plotIntegralCurve(ax, Point, alpha, branches, colors):
     for i in range(len(branches)): #Esse laco irah criar as conexoes entre os pontos
         ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
                 branches[i][:, 1], #Conjunto da componente Y da i-esima branch
@@ -16,18 +16,15 @@ def integralCurveWB(ax, Point, alpha, branches, colors):
                 linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
                 #zorder = 4)        #Ordem de prioridade
 
-    ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k')
     
     lv.plotVecsLambdaZWB(ax, alpha, branches, 5) #Plotagem dos vetores
-
+    #ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k', zorder = 5)
+    ax.scatter(*Point, color='black', s=40, depthshade=False)
 
 #Nao possui as branches como parametro (Calculo interno)
-def integralCurve(alpha, Point, configCurve):
+def integralCurve(alpha, configCurve):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import includes.Inicia as ini
-
-    #Variaveis de metodos numericos
-    h, N = configCurve
 
     #__________IICIALIZANDO AMBIENTE 3D__________#
 
@@ -74,20 +71,16 @@ def integralCurve(alpha, Point, configCurve):
         ax.set_ylabel('$v$')
         ax.set_zlabel('$z$')
 
-    branches = b.Branches_point(alpha, Point, [h, N]) #Branches
-    colors = b.Branches_point_colors(alpha, branches) #Cores das branches
+    #Variavel que armazena os pontos iniciais
+    iniPoints = af.read_points()
 
-    for i in range(len(branches)): #Esse laco irah criar as conexoes entre os pontos
-        ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
-                branches[i][:, 1], #Conjunto da componente Y da i-esima branch
-                branches[i][:, 2], #Conjunto da componente Z da i-esima branch
-                color = colors[i], #Cor da i-iesima branch
-                linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
-                #zorder = 4)        #Ordem de prioridade
+    for Point in iniPoints: 
+        branches = b.Branches_point(alpha, Point, configCurve) #Branches
+        colors = b.Branches_point_colors(alpha, branches) #Cores das branches
 
-    
-    ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k')
+        plotIntegralCurve(ax, Point, alpha, branches, colors)
 
     plot.show()
 
-integralCurve(0.1, [0.4, 0.3, 0.2], [0.01, 500])
+#integralCurve(0.01, [0.01, 500])
+#integralCurve(0.01, [0.6, 0.3, 0.2], [0.01, 500])

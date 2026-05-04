@@ -12,7 +12,7 @@ Os ramos devem:
 import includes.Numericals_methods as nm
 from includes.Inicia import baricentrica
 from includes.Functions import fw, lbdas, lbdaf 
-from includes.Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet
+from includes.Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet, colorPoint
 
 import numpy as np
 
@@ -259,20 +259,8 @@ def Branches_point_colors(alpha, branches):
     for i in range(len(branches)):
         #Extrai o ponto cenntral (da metade do ramo)
         point = branches[i][len(branches[i])//2] #Divisão de inteiro
+        colors.append(colorPoint(alpha, point)) #Armazena cor do ponto
 
-        #Definindo valores e comparando:
-        lambdaS_value = lbdas(*point)
-        lambdaF_value = lbdaf(*point)
-        lambdaZ_value = lambdz(*point, alpha)
-
-        if((lambdaZ_value < lambdaF_value < lambdaS_value) or (lambdaZ_value < lambdaS_value < lambdaF_value)):
-            colors.append('b') #Adiciona a cor Azul
-        elif((lambdaS_value < lambdaZ_value < lambdaF_value) or (lambdaF_value < lambdaZ_value < lambdaS_value)):
-            colors.append('magenta') #Adiciona a cor Vermelha
-        elif((lambdaF_value < lambdaS_value < lambdaZ_value) or (lambdaS_value < lambdaF_value < lambdaZ_value)):
-            colors.append('r') #Adiciona a cor Roxa
-        else:
-            colors.append('k')
 
     return colors
 

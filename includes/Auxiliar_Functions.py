@@ -146,7 +146,7 @@ def plotCone(ax, origin, direction, color, height=0.05, radius=0.015, opacity=1.
     Z = np.vstack([apex_row[2], ring[2]])
 
     ax.plot_surface(X, Y, Z, color=color, alpha=opacity, linewidth=0,
-                    antialiased=False, shade=True)  # antialiased=False é mais rápido
+                    antialiased=False, shade=True, zorder = 4)  # antialiased=False é mais rápido
 
 
 #Funcao que seleciona os pontos de forma simetrica 
@@ -178,3 +178,17 @@ def remove_consecutive_duplicates(points, tol=1e-9):
         if not np.allclose(p, unique[-1], atol=tol):
             unique.append(p)
     return unique
+
+################################################################
+#Funcao que le os pontos iniciais de um arquivo txt:
+def read_points():
+    """Lê pontos de um arquivo txt, um ponto por linha: x y z"""
+    points = []
+    with open("Data/Initial_Points.txt", 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):  # ignora vazios e comentários
+                continue
+            coords = list(map(float, line.split()))
+            points.append(coords)
+    return points

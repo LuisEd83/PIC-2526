@@ -14,7 +14,7 @@ def argmin_branch(branches):
                 Zm = branches[i][j][2] #Troca o Zm para o novo ponto com altura menor
     return Zm
 
-def levelCurveWB(ax, auto_branches, auto_colors):
+def plotCoicindenceCurves(ax, auto_branches, auto_colors):
     if(af.branchSlow() and af.branchFast()):        #Plotagem dos dois ramos
         for i in range(len(auto_branches)):
             for j in range(len(auto_branches[i])):
@@ -41,11 +41,9 @@ def levelCurveWB(ax, auto_branches, auto_colors):
                     color = auto_colors[1],
                     linestyle = '-')
 
-def levelCurve(alpha, curveConfig, numCortes):
+def coicindenceCurves(alpha, curveConfig, numCortes):
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import includes.Inicia as ini
-
-    h, N = curveConfig
 
     #__________IICIALIZANDO AMBIENTE 3D__________#
 
@@ -95,36 +93,10 @@ def levelCurve(alpha, curveConfig, numCortes):
     #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS AUTOVALORES__________#
     #branches = b.Branches_point(alpha, Point, [h, N])
     #base = argmin_branch(branches)
-    auto_branches = b.Branches_auto([h, N], numCortes, alpha, base = 0, altura = 1)
+    auto_branches = b.Branches_auto(curveConfig, numCortes, alpha, base = 0, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
-    if(af.branchSlow() and af.branchFast()):        #Plotagem dos dois ramos
-        for i in range(len(auto_branches)):
-            for j in range(len(auto_branches[i])):
-                seg = np.array(auto_branches[i][j])
-                ax.plot(seg[:, 0],
-                        seg[:, 1],
-                        seg[:, 2],
-                        color = auto_colors[j],
-                        linestyle = '-')
-    elif(af.branchSlow() and (not af.branchFast())): #Plotagem do ramo lambda_f == lambda_z
-        for i in range(len(auto_branches)):
-            seg = np.array(auto_branches[i][0])
-            ax.plot(seg[:, 0],
-                    seg[:, 1],
-                    seg[:, 2],
-                    color = auto_colors[0],
-                    linestyle = '-')
-    elif((not af.branchSlow()) and af.branchFast()): #Plotagem do ramo lambda_s == lambda_z
-        for i in range(len(auto_branches)):
-            seg = np.array(auto_branches[i][1])
-            ax.plot(seg[:, 0],
-                    seg[:, 1],
-                    seg[:, 2],
-                    color = auto_colors[1],
-                    linestyle = '-')
+    plotCoicindenceCurves(ax, auto_branches, auto_colors)
 
     #Inicia plotagem
     plt.show()
-
-levelCurve(0.1, [0.01, 500], 10)

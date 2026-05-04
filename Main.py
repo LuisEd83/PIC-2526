@@ -20,20 +20,12 @@ import matplotlib.pyplot as plt
 
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
-N = 500         #Numero de realizacao de passo
+N = 1000         #Numero de realizacao de passo
 alpha = 0.01    #Variável de controle
 Num_z = 20      #Numero de curvas de nivel
 
-sqr3 = np.sqrt(3) 
-
-#Definindo o ponto inicial para teste
-U0 = [0.4, 0.3, 0.2]
-U1 = [0.5, 0.1, 0.1] #Ponto importante
-
-U2 = [0.6, 0.3, 0.2] #Ponto inicial fora do prisma
-
 #Definindo a funcao principal de plot
-def Prism_plot(Point : list):
+def main():
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import includes.Inicia as ini
 
@@ -82,29 +74,34 @@ def Prism_plot(Point : list):
         ax.set_ylabel('$v$')
         ax.set_zlabel('$z$')
 
-    #Variavel que armazena as branches
-    branches = b.Branches_point(alpha, Point, [h, N]) #Branches
-    colors = b.Branches_point_colors(alpha, branches)
+    #Variavel que armazena os pontos iniciais:
+    iniPoints = af.read_points()
 
-    #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
-    ic.integralCurveWB(ax, Point, alpha, branches, colors)
+    #Itera sobre cada ponto em iniPoints
+    for Point in iniPoints:
+        #Variavel que armazena as branches
+        branches = b.Branches_point(alpha, Point, [h, N])
+        colors = b.Branches_point_colors(alpha, branches)
+
+        #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
+        ic.plotIntegralCurve(ax, Point, alpha, branches, colors)
+
+        #__________INICIALIZANDO PLOTAGEM DE GRAFICO RELACIONADO AOS VALORES DOS AUTOVALORES__________#
+        #ag.lamb_graph(alpha, Point, [h, N])
     
-
     #Variaveis para grafico de autovalores
-    base = cs.argmin_branch(branches)
-    auto_branches = b.Branches_auto([h, N], Num_z, alpha, base, altura = 1)
+    #base = cs.argmin_branch(branches)
+    auto_branches = b.Branches_auto([h, N], Num_z, alpha, 0, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
     #__________INICIALIZANDO PLOTAGEM DOS PONTOS RELACIONADA AO AUTOVALOR LAMBDA-Z__________#
-    cs.levelCurveWB(ax, auto_branches, auto_colors)
+    cs.plotCoicindenceCurves(ax, auto_branches, auto_colors)
 
-    ag.lamb_graph(alpha, Point, [h, N])
 
     #Inicia plotagem
     plt.show()
 
-Prism_plot(U2)
-
+main()
 
 #Pontos utilizados (e suas combinações):
 #[0.4, 0.4, 0.1] com Lambda_S = Lambda_Z
