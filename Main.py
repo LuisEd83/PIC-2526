@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
-N = 1000         #Numero de realizacao de passo
+N = 1000        #Numero de realizacao de passo
 alpha = 0.01    #Variável de controle
 Num_z = 20      #Numero de curvas de nivel
 
@@ -85,9 +85,9 @@ def main():
 
         #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
         ic.plotIntegralCurve(ax, Point, alpha, branches, colors)
-
-        #__________INICIALIZANDO PLOTAGEM DE GRAFICO RELACIONADO AOS VALORES DOS AUTOVALORES__________#
-        #ag.lamb_graph(alpha, Point, [h, N])
+        
+    #__________INICIALIZANDO PLOTAGEM DE GRAFICO RELACIONADO AOS VALORES DOS AUTOVALORES__________#
+    ag.lamb_graph(alpha, [h, N])
     
     #Variaveis para grafico de autovalores
     #base = cs.argmin_branch(branches)
@@ -102,11 +102,3 @@ def main():
     plt.show()
 
 main()
-
-#Pontos utilizados (e suas combinações):
-#[0.4, 0.4, 0.1] com Lambda_S = Lambda_Z
-#[0.8, 0.15, 0.3] com Lambda_F = Lambda_Z
-#
-#[0.2, 0.6, 0.3] com gráfico de autovalores
-#[0.2, 0.4, 0.1] com gráfico de autovalores
-#[0.7, 0.25, 0.1] com gráfico de autovalores

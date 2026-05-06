@@ -11,11 +11,7 @@ Objetivo:
 
 """
 
-"""
-1) Flags: Plotar todos os pontos // 
-"""
-
-from includes.Auxiliar_Functions import lambdz, transparencia, if_PointInEq, if_PointInRet
+from includes.Auxiliar_Functions import lambdz, transparencia, if_PointInEq, if_PointInRet, read_points
 from includes._Branches import Branches_point
 from includes.Functions import lbdaf, lbdas
 from includes.Inicia import baricentrica
@@ -51,77 +47,22 @@ def merge_continuous_branches(branches, tol=1e-9):
     segments.append(current)  #fecha o último segmento
     return segments
 
+def lambGraphPlot(ax, Point, alpha, segments, k, dist):
+    """Plota o grafico de autovalores em um ax ja existente."""
 
-def lamb_graph(alpha, Point : list, integ_config : list):
-    #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
-    import includes.Functions as fun
-    
-    def ponto_igual(p1, p2, tol=1e-9):
-        return np.allclose(p1, p2, atol=tol) 
-
-    #Extraio as branches:
-    branches = Branches_point(alpha, Point, integ_config) #Ramos (conjunto de pontos)
-    segments = merge_continuous_branches(branches)        #Branches de ramos contínuos
-
-    #Limpando os pontos iguais nas branches:
-    j = 1
-    for i in range(len(branches)):                          #Varre as brances
-        if(j == len(branches)):
-            break
-        if(ponto_igual(branches[i][-1], branches[j][0])):
-             branches[j] = branches[j][1:]
-        j += 1
-            
-
-    #Variavel de escala (0 a 1)
-    k = []
-    c = 0  #Variavel de correcao de erro
-    tam = sum(len(branchei) for branchei in branches) #Tamanho total das branches
-    for i in range(len(branches)):
-        for _ in range(len(branches[i])):
-            c += 1
-            k.append(c/tam)                           #Reescala para o intervalo [0,1]
-
-    if(pointInP(Point) or (not transparencia)):
-        #Variavel para armazenar a branch e o indice na branch
-        local_point = []
-        for i, branch in enumerate(branches):
-            for j, p in enumerate(branch):
-                if(ponto_igual(p, Point)):     #Localiza o ponto dentre as branches
-                    #i = branch; j = indice na branch i
-                    local_point.append(i)
-                    local_point.append(j)
-
-        dist = 0  #Variavel de distancia do primeiro ponto ate o Point 
-        if(local_point[0] == 0):
-            dist += local_point[1]
-        else:
-            for i in range(local_point[0]):
-                dist += len(branches[i])
-            dist += local_point[1] #Corrige a distancia 
-
-        dist /= tam   #Redimensiona a distancia para o intervalo [0, 1]
-
-    fig, ax = plot.subplots()
-
-    if(pointInP(Point) or (not transparencia)):
+    if dist is not None:
         ax.axvline(x=dist, color='k', linestyle='--', label='Ponto inicial')
 
-    k_offset = 0  #acumulador de posição global
-
+    k_offset = 0
     for i, segment in enumerate(segments):
         n = len(segment)
-        
-        #Fatia do eixo k correspondente a esta branch
         k_branch = k[k_offset : k_offset + n]
         k_offset += n
 
-        #Calcula os autovalores só desta branch
         LS = [lbdas(*p) for p in segment]
         LF = [lbdaf(*p) for p in segment]
         LZ = [lambdz(*p, alpha) for p in segment]
 
-        #Só a primeira branch recebe label (evita duplicatas na legenda)
         label_s = 'Lambda S' if i == 0 else '_nolegend_'
         label_f = 'Lambda F' if i == 0 else '_nolegend_'
         label_z = 'Lambda Z' if i == 0 else '_nolegend_'
@@ -134,4 +75,64 @@ def lamb_graph(alpha, Point : list, integ_config : list):
     ax.legend()
     ax.set_xlabel("Eixo X - Passos")
     ax.set_ylabel("Eixo Y - Valores numéricos")
+
+    #Titulo para identificar qual o i-esimo ponto inicial que gera o grafico
+    label = f'P0 = ({Point[0]:.2f}, {Point[1]:.2f}, {Point[2]:.2f})'
+    ax.set_title(label) 
+
+def lamb_graph(alpha, integ_config : list):
+    def ponto_igual(p1, p2, tol=1e-9):
+        return np.allclose(p1, p2, atol=tol) 
+
+    #Variavel que armazena os pontos iniciais
+    iniPoints = read_points()
+
+    for Point in iniPoints:
+        #Extraio as branches:
+        branches = Branches_point(alpha, Point, integ_config) #Ramos (conjunto de pontos)
+        segments = merge_continuous_branches(branches)        #Branches de ramos contínuos
+
+        #Limpando os pontos iguais nas branches:
+        j = 1
+        for i in range(len(branches)):                          #Varre as branches
+            if(j == len(branches)):
+                break
+            if(ponto_igual(branches[i][-1], branches[j][0])):
+                branches[j] = branches[j][1:]
+            j += 1
+                
+
+        #Variavel de escala (0 a 1)
+        k = []
+        c = 0  #Variavel de correcao de erro
+        tam = sum(len(branchei) for branchei in branches) #Tamanho total das branches
+        for i in range(len(branches)):
+            for _ in range(len(branches[i])):
+                c += 1
+                k.append(c/tam)                           #Reescala para o intervalo [0,1]
+
+        if(pointInP(Point) or (not transparencia)):
+            #Variavel para armazenar a branch e o indice na branch
+            local_point = []
+            for i, branch in enumerate(branches):
+                for j, p in enumerate(branch):
+                    if(ponto_igual(p, Point)):     #Localiza o ponto dentre as branches
+                        #i = branch; j = indice na branch i
+                        local_point.append(i)
+                        local_point.append(j)
+
+            dist = 0  #Variavel de distancia do primeiro ponto ate o Point 
+            if(local_point[0] == 0):
+                dist += local_point[1]
+            else:
+                for i in range(local_point[0]):
+                    dist += len(branches[i])
+                dist += local_point[1] #Corrige a distancia 
+
+            dist /= tam   #Redimensiona a distancia para o intervalo [0, 1]
+
+        fig, ax = plot.subplots()
+        lambGraphPlot(ax, Point, alpha, segments, k, dist)
+    
+    #Plotando todas as figuras de uma so vez
     plot.show()

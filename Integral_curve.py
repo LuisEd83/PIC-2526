@@ -1,3 +1,10 @@
+"""
+Modulo: Curva Integral
+
+Objetivos:
+-> Plotar curvas integrais usando o metodo de euler
+"""
+
 import includes._Branches as b
 import includes.Auxiliar_Functions as af
 import includes.Functions as fun
@@ -20,6 +27,10 @@ def plotIntegralCurve(ax, Point, alpha, branches, colors):
     lv.plotVecsLambdaZWB(ax, alpha, branches, 5) #Plotagem dos vetores
     #ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k', zorder = 5)
     ax.scatter(*Point, color='black', s=40, depthshade=False)
+
+    #Texto para o ponto inicial
+    label = f'({Point[0]:.2f}, {Point[1]:.2f}, {Point[2]:.2f})'
+    ax.text(Point[0], Point[1], Point[2], f'  {label}', fontsize=8, color='black')
 
 #Nao possui as branches como parametro (Calculo interno)
 def integralCurve(alpha, configCurve):
