@@ -41,17 +41,15 @@ def plotVecsLambdaZWB(ax, alpha, branches, delta):
         for i in range(len(sampled) - 1):
             if (not(i % 2)):
                 d = np.array(sampled[i+1]) - np.array(sampled[i])
+                color = af.colorPoint(alpha, sampled[i])
                 if af.lambdz(*sampled[i], alpha) > af.lambdz(*sampled[i+1], alpha):
-                    af.plotCone(ax, sampled[i], -d, af.colorPoint(alpha, sampled[i]))
+                    af.plotCone(ax, sampled[i], -d, color[0])
                 else:
-                    af.plotCone(ax, sampled[i], d, af.colorPoint(alpha, sampled[i]))
+                    af.plotCone(ax, sampled[i], d, color[0])
 
 def plotVecsLambdaZ(alpha, Point, integConfig, delta):
     import includes.Auxiliar_Functions as af
     import matplotlib.pyplot as plt
-
-    def is_continuous(p_last, p_first, tol=1e-2):
-        return np.allclose(p_last, p_first, atol=tol)
 
     #__________IICIALIZANDO AMBIENTE 3D__________#
 
@@ -102,32 +100,6 @@ def plotVecsLambdaZ(alpha, Point, integConfig, delta):
     branches = b.Branches_point(alpha, Point, integConfig)
 
     #Realiza o plot dos vetores sobre a curva
-    #Agrupa branches contínuas em segmentos
-    segments = []
-    current_segment = list(branches[0])
-
-    for i in range(len(branches) - 1):
-        if is_continuous(branches[i][-1], branches[i+1][0]):
-            #Continua: concatena a proxima branch no segmento atual
-            current_segment.extend(branches[i+1])
-        else:
-            #Descontinuidade: salva o segmento atual e começa um novo
-            segments.append(current_segment)
-            current_segment = list(branches[i+1])
-    
-    segments.append(current_segment)  #adiciona o ultimo segmento
-
-    #Plota os vetores para cada segmento isoladamente
-    for segment in segments:
-        flat    = af.remove_consecutive_duplicates(segment)
-        sampled = af.stride_sample_symmetric(flat, delta)
-
-        for i in range(len(sampled) - 1):
-            if (not(i % 2)):
-                d = np.array(sampled[i+1]) - np.array(sampled[i])
-                if af.lambdz(*sampled[i], alpha) > af.lambdz(*sampled[i+1], alpha):
-                    af.plotCone(ax, sampled[i], -d, af.colorPoint(alpha, sampled[i]))
-                else:
-                    af.plotCone(ax, sampled[i], d, af.colorPoint(alpha, sampled[i]))
+    plotVecsLambdaZWB(ax, alpha, branches, delta)
 
     plt.show()

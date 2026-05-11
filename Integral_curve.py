@@ -19,7 +19,7 @@ def plotIntegralCurve(ax, Point, alpha, branches, colors):
         ax.plot(branches[i][:, 0], #Conjunto da componente X da i-esima branch 
                 branches[i][:, 1], #Conjunto da componente Y da i-esima branch
                 branches[i][:, 2], #Conjunto da componente Z da i-esima branch
-                color = colors[i], #Cor da i-iesima branch
+                color = colors[i][0], #Cor da i-iesima branch
                 linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
                 #zorder = 4)        #Ordem de prioridade
 
@@ -27,10 +27,6 @@ def plotIntegralCurve(ax, Point, alpha, branches, colors):
     lv.plotVecsLambdaZWB(ax, alpha, branches, 5) #Plotagem dos vetores
     #ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k', zorder = 5)
     ax.scatter(*Point, color='black', s=40, depthshade=False)
-
-    #Texto para o ponto inicial
-    label = f'({Point[0]:.2f}, {Point[1]:.2f}, {Point[2]:.2f})'
-    ax.text(Point[0], Point[1], Point[2], f'  {label}', fontsize=8, color='black')
 
 #Nao possui as branches como parametro (Calculo interno)
 def integralCurve(alpha, configCurve):
@@ -93,5 +89,5 @@ def integralCurve(alpha, configCurve):
 
     plot.show()
 
-#integralCurve(0.01, [0.01, 500])
+#integralCurve(0.1, [0.01, 500])
 #integralCurve(0.01, [0.6, 0.3, 0.2], [0.01, 500])

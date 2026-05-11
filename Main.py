@@ -20,8 +20,8 @@ import matplotlib.pyplot as plt
 
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
-N = 1000        #Numero de realizacao de passo
-alpha = 0.01    #Variável de controle
+N = 500        #Numero de realizacao de passo
+alpha = 1    #Variável de controle
 Num_z = 20      #Numero de curvas de nivel
 
 #Definindo a funcao principal de plot
@@ -41,7 +41,7 @@ def main():
     ax = ini.ambiente3d()
     ax.view_init(elev=30., azim=-130.) #Initial Camera Position
 
-    if(af.transparencia()):
+    if(af.transparencia() or 1):
         #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
         
         #Vertices do triangulo
@@ -90,8 +90,8 @@ def main():
     ag.lamb_graph(alpha, [h, N])
     
     #Variaveis para grafico de autovalores
-    #base = cs.argmin_branch(branches)
-    auto_branches = b.Branches_auto([h, N], Num_z, alpha, 0, altura = 1)
+    base = cs.argmin_branch(branches)
+    auto_branches = b.Branches_auto([h, N], Num_z, alpha, base - 0.5, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
     #__________INICIALIZANDO PLOTAGEM DOS PONTOS RELACIONADA AO AUTOVALOR LAMBDA-Z__________#

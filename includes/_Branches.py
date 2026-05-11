@@ -55,11 +55,11 @@ def Branches_point(alpha, Point : list, integ_config : list):
         lambdaF_value = lbdaf(*Point)
         lambdaZ_value = lambdz(*Point, alpha)
 
-        if((lambdaZ_value < lambdaF_value < lambdaS_value) or (lambdaZ_value < lambdaS_value < lambdaF_value)):
+        if(lambdaZ_value < lambdaS_value < lambdaF_value):
             return 1
-        elif((lambdaS_value < lambdaZ_value < lambdaF_value) or (lambdaF_value < lambdaZ_value < lambdaS_value)):
+        elif(lambdaS_value < lambdaZ_value < lambdaF_value):
             return 2
-        elif((lambdaF_value < lambdaS_value < lambdaZ_value) or (lambdaS_value < lambdaF_value < lambdaZ_value)):
+        elif(lambdaS_value < lambdaF_value < lambdaZ_value):
             return 3
         else:
             return -1
@@ -259,7 +259,7 @@ def Branches_point_colors(alpha, branches):
     for i in range(len(branches)):
         #Extrai o ponto cenntral (da metade do ramo)
         point = branches[i][len(branches[i])//2] #Divisão de inteiro
-        colors.append(colorPoint(alpha, point)) #Armazena cor do ponto
+        colors.append(colorPoint(alpha, point)) #Armazena cor do ponto da forma ['LambZ', 'LambS', 'LambF']
 
 
     return colors

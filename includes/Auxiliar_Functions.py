@@ -19,13 +19,13 @@ def transparencia():
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
 #nivel lambda_s = lambda_z
 def branchSlow(): 
-    s = 0 #s = 1 para permitir que seja plotado o ramo
+    s = 1 #s = 1 para permitir que seja plotado o ramo
     return s
 
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
 #nivel lambda_f = lambda_z
 def branchFast(): 
-    f = 0 #s = 1 para permitir que seja plotado o ramo
+    f = 1 #s = 1 para permitir que seja plotado o ramo
     return f
 
 def points_curv(): #Esta funcao habilita os pontos na curva integral.
@@ -39,6 +39,29 @@ def az(z): #Da/dz
 
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))
+
+#Derivada direcional de lambdZ com direcao dos campos
+#def Dlambdz(u, v, z, alpha):
+#    from Campo_Ez import campos
+#
+#    #Calculando gradiente:
+#    pc = (fun.Du(u, v, z) * (u + alpha*az(z)) - fun.fw(u, v, z))/((u+alpha*az(z))**2)                       #Primeira componente
+#    sc = (fun.Dv(u, v, z))/(u + alpha*az(z))                                                                #Segunda componente
+#    tc = (fun.Dc(u, v, z) * (u + alpha*az(z)) + fun.fw(u, v, z) * (alpha*np.sin(z)))/((u + alpha*az(z))**2) #Terceira componente
+#
+#    #Extraindo campos (componentes de direção)
+#    camps = campos(u, v, z, alpha)
+#
+#    #O return sera o produto intero entre o gradiente e a direcao da curva integral (que eh, no fim das contas, os campos)
+#    return (pc*camps[0] + sc*camps[1] + tc*camps[2])
+#
+#def color_point(colors : list, Point, alpha): #Determina a cor do ponto a partir da derivada do Lambda_z
+#    if(Dlambdz(*Point, alpha) > 0):
+#        colors.append('r')
+#    elif(Dlambdz(*Point, alpha) < 0):
+#        colors.append('b')
+#    else:
+#        colors.append('white')
 
 ##############################################################
 #Definindo uma constante para a funcao posterior
@@ -108,14 +131,14 @@ def colorPoint(alpha, point):
         lambdaS_value = fun.lbdas(*point)
         lambdaF_value = fun.lbdaf(*point)
         lambdaZ_value = lambdz(*point, alpha)
-        if((lambdaZ_value < lambdaF_value < lambdaS_value) or (lambdaZ_value < lambdaS_value < lambdaF_value)):
-            return 'b'
-        elif((lambdaS_value < lambdaZ_value < lambdaF_value) or (lambdaF_value < lambdaZ_value < lambdaS_value)):
-            return 'g' #Adiciona a cor Vermelha
-        elif((lambdaF_value < lambdaS_value < lambdaZ_value) or (lambdaS_value < lambdaF_value < lambdaZ_value)):
-            return 'r' #Adiciona a cor Roxa
+        if(lambdaZ_value < lambdaS_value < lambdaF_value):
+            return ['b', 'g', 'r']
+        elif(lambdaS_value < lambdaZ_value < lambdaF_value):
+            return ['g', 'b', 'r'] #Adiciona a cor Vermelha
+        elif(lambdaS_value < lambdaF_value < lambdaZ_value):
+            return ['r', 'b', 'g'] #Adiciona a cor Roxa
         else:
-            return 'k'
+            return ['k', 'k', 'k']
         
 #Funcao que plota um cone - substtuindo a necessidade de plotar um vetor
 def plotCone(ax, origin, direction, color, height=0.05, radius=0.015, opacity=1.0, n_theta=12):

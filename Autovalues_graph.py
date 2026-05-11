@@ -11,13 +11,14 @@ Objetivo:
 
 """
 
-from includes.Auxiliar_Functions import lambdz, transparencia, if_PointInEq, if_PointInRet, read_points
+from includes.Auxiliar_Functions import lambdz, transparencia, if_PointInEq, if_PointInRet, read_points, colorPoint
 from includes._Branches import Branches_point
 from includes.Functions import lbdaf, lbdas
 from includes.Inicia import baricentrica
 
 import numpy as np
 import matplotlib.pyplot as plot
+import matplotlib.lines as mlines
 
 def pointInP(Point):
     if(not transparencia()):
@@ -51,9 +52,10 @@ def lambGraphPlot(ax, Point, alpha, segments, k, dist):
     """Plota o grafico de autovalores em um ax ja existente."""
 
     if dist is not None:
-        ax.axvline(x=dist, color='k', linestyle='--', label='Ponto inicial')
+        ax.axvline(x=dist, color='k', dashes = (4, 5, 3, 6), label='Ponto inicial', linewidth = 1)
 
     k_offset = 0
+
     for i, segment in enumerate(segments):
         n = len(segment)
         k_branch = k[k_offset : k_offset + n]
@@ -63,21 +65,35 @@ def lambGraphPlot(ax, Point, alpha, segments, k, dist):
         LF = [lbdaf(*p) for p in segment]
         LZ = [lambdz(*p, alpha) for p in segment]
 
-        label_s = 'Lambda S' if i == 0 else '_nolegend_'
-        label_f = 'Lambda F' if i == 0 else '_nolegend_'
-        label_z = 'Lambda Z' if i == 0 else '_nolegend_'
+        colors = [colorPoint(alpha, p) for p in segment]
+        #formato de colors => [color_LZ, color_LS, color_LF]
 
-        ax.plot(k_branch, LS, color='b',       linestyle='-', label=label_s)
-        ax.plot(k_branch, LF, color='r',       linestyle='-', label=label_f)
-        ax.plot(k_branch, LZ, color='magenta', linestyle='-', label=label_z)
+        for j in range(len(segment) - 1):
+            color_j = colors[j]
+
+            #Lambda Z -> colors[0]
+            ax.plot(k_branch[j:j+2], LZ[j:j+2], color=color_j[0], linestyle='-', linewidth = 3)
+
+            #Lambda S -> colors[1]
+            ax.plot(k_branch[j:j+2], LS[j:j+2], color=color_j[1], dashes = (2, 25), linewidth = 1.5)
+
+            #Lambda F -> colors[2]
+            ax.plot(k_branch[j:j+2], LF[j:j+2], color=color_j[2], linestyle=':', linewidth = 1.5)
+
+
+    #Plotagem da legenda do gráfico
+    legend_z = mlines.Line2D([], [], color='k', linestyle='-',  label='Lambda Z')
+    legend_s = mlines.Line2D([], [], color='k', dashes = (8, 3), label='Lambda S')
+    legend_f = mlines.Line2D([], [], color='k', linestyle=':',  label='Lambda F')
+
+    ax.legend(handles=[legend_z, legend_s, legend_f])
 
     ax.grid(True)
-    ax.legend()
     ax.set_xlabel("Eixo X - Passos")
     ax.set_ylabel("Eixo Y - Valores numéricos")
 
     #Titulo para identificar qual o i-esimo ponto inicial que gera o grafico
-    label = f'P0 = ({Point[0]:.2f}, {Point[1]:.2f}, {Point[2]:.2f})'
+    label = f'P0 = ({Point[0]:.2f}, {Point[1]:.2f}, {Point[2]:.2f}) with alpha = {alpha}'
     ax.set_title(label) 
 
 def lamb_graph(alpha, integ_config : list):
@@ -90,6 +106,10 @@ def lamb_graph(alpha, integ_config : list):
     for Point in iniPoints:
         #Extraio as branches:
         branches = Branches_point(alpha, Point, integ_config) #Ramos (conjunto de pontos)
+        first = lambdz(*branches[0][0], alpha)
+        last = lambdz(*branches[0][-1], alpha)
+        print(f"First : {first} | last : {last}")
+
         segments = merge_continuous_branches(branches)        #Branches de ramos contínuos
 
         #Limpando os pontos iguais nas branches:
