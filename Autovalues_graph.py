@@ -51,8 +51,15 @@ def merge_continuous_branches(branches, tol=1e-9):
 def lambGraphPlot(ax, Point, alpha, segments, k, dist):
     """Plota o grafico de autovalores em um ax ja existente."""
 
+    #Plot do valor dos autovalores em relação ao Ponto inicial (se estiver no prisma)
     if dist is not None:
-        ax.axvline(x=dist, color='k', dashes = (4, 5, 3, 6), label='Ponto inicial', linewidth = 1)
+        lambZPoint = lambdz(*Point, alpha)
+        lambSPoint = lbdas(*Point)
+        lambFPoint = lbdaf(*Point)
+
+        ax.scatter(dist, lambZPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
+        ax.scatter(dist, lambSPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
+        ax.scatter(dist, lambFPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
 
     k_offset = 0
 
@@ -75,7 +82,7 @@ def lambGraphPlot(ax, Point, alpha, segments, k, dist):
             ax.plot(k_branch[j:j+2], LZ[j:j+2], color=color_j[0], linestyle='-', linewidth = 3)
 
             #Lambda S -> colors[1]
-            ax.plot(k_branch[j:j+2], LS[j:j+2], color=color_j[1], dashes = (2, 25), linewidth = 1.5)
+            ax.plot(k_branch[j:j+2], LS[j:j+2], color=color_j[1], dashes = (2, 20, 1, 20), linewidth = 1.5)
 
             #Lambda F -> colors[2]
             ax.plot(k_branch[j:j+2], LF[j:j+2], color=color_j[2], linestyle=':', linewidth = 1.5)
@@ -89,8 +96,8 @@ def lambGraphPlot(ax, Point, alpha, segments, k, dist):
     ax.legend(handles=[legend_z, legend_s, legend_f])
 
     ax.grid(True)
-    ax.set_xlabel("Eixo X - Passos")
-    ax.set_ylabel("Eixo Y - Valores numéricos")
+    ax.set_xlabel("Eixo X - integral curve parametrization")
+    ax.set_ylabel("Eixo Y - Numerical values")
 
     #Titulo para identificar qual o i-esimo ponto inicial que gera o grafico
     label = f'P0 = ({Point[0]:.2f}, {Point[1]:.2f}, {Point[2]:.2f}) with alpha = {alpha}'
