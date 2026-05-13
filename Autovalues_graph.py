@@ -79,19 +79,19 @@ def lambGraphPlot(ax, Point, alpha, segments, k, dist):
             color_j = colors[j]
 
             #Lambda Z -> colors[0]
-            ax.plot(k_branch[j:j+2], LZ[j:j+2], color=color_j[0], linestyle='-', linewidth = 3)
+            ax.plot(k_branch[j:j+2], LZ[j:j+2], color=color_j[0], linestyle='-', linewidth = 1)
 
             #Lambda S -> colors[1]
-            ax.plot(k_branch[j:j+2], LS[j:j+2], color=color_j[1], dashes = (2, 20, 1, 20), linewidth = 1.5)
+            ax.plot(k_branch[j:j+2], LS[j:j+2], color=color_j[1], linestyle = '--', marker = '*', markersize = 4, linewidth = 1)
 
             #Lambda F -> colors[2]
-            ax.plot(k_branch[j:j+2], LF[j:j+2], color=color_j[2], linestyle=':', linewidth = 1.5)
+            ax.plot(k_branch[j:j+2], LF[j:j+2], color=color_j[2], linestyle=':', linewidth = 1)
 
 
     #Plotagem da legenda do gráfico
     legend_z = mlines.Line2D([], [], color='k', linestyle='-',  label='Lambda Z')
-    legend_s = mlines.Line2D([], [], color='k', dashes = (8, 3), label='Lambda S')
-    legend_f = mlines.Line2D([], [], color='k', linestyle=':',  label='Lambda F')
+    legend_s = mlines.Line2D([], [], color='k', linestyle='--', marker = '*', label='Lambda S')
+    legend_f = mlines.Line2D([], [], color='k', linestyle='--',  label='Lambda F')
 
     ax.legend(handles=[legend_z, legend_s, legend_f])
 
