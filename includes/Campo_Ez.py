@@ -15,8 +15,11 @@ import includes.Functions as fun
 from numpy import sqrt, cos
 
 #Redefinindo funcoes para nao haver erro circular
+#def az(z):
+#    return (cos(z))
+
 def az(z):
-    return cos(z)
+    return 1/(1+z**2)
 
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))

@@ -34,8 +34,14 @@ def points_curv(): #Esta funcao habilita os pontos na curva integral.
 
 ##############################################################
 #Derivada da funcao continua e crescente no intervalo [0,1]
+#def az(z): #Da/dz
+#    return (np.cos(z)) #Derivada de a(z) em relacao a z
+
+def a(z): 
+    return np.arctan2(z)
+
 def az(z): #Da/dz
-    return np.cos(z) #Derivada de a(z) em relacao a z
+    return 1/(1+z**2)
 
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))

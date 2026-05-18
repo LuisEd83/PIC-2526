@@ -11,9 +11,9 @@ Objetivos:
 import includes.Functions as fun
 import includes._Branches as b
 import includes.Auxiliar_Functions as af 
-import Autovalues_graph as ag
-import Coincidence_surfaces as cs
-import Integral_curve as ic
+import Parte1.Autovalues_graph as ag
+import Parte1.Coincidence_surfaces as cs
+import Parte1.Integral_curve as ic
 
 import numpy as np
 import matplotlib.pyplot as plt

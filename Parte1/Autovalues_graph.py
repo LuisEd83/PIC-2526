@@ -57,9 +57,9 @@ def lambGraphPlot(ax, Point, alpha, segments, k, dist):
         lambSPoint = lbdas(*Point)
         lambFPoint = lbdaf(*Point)
 
-        ax.scatter(dist, lambZPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
-        ax.scatter(dist, lambSPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
-        ax.scatter(dist, lambFPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
+        ax.plot(dist, lambZPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
+        ax.plot(dist, lambSPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
+        ax.plot(dist, lambFPoint, color = 'k', marker = 'o', zorder = 3) #Formato (U0, lamb(U0))
 
     k_offset = 0
 
@@ -163,3 +163,4 @@ def lamb_graph(alpha, integ_config : list):
     
     #Plotando todas as figuras de uma so vez
     plot.show()
+

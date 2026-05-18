@@ -9,7 +9,7 @@ import includes._Branches as b
 import includes.Auxiliar_Functions as af
 import includes.Functions as fun
 
-import LambdaZ_vec as lv
+import Parte1.LambdaZ_vec as lv
 import matplotlib.pyplot as plot
 
 #Possui as branches como parametro 
