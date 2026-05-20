@@ -24,7 +24,8 @@ def plotIntegralCurve(ax, Point, alpha, branches, colors):
                 #zorder = 4)        #Ordem de prioridade
 
     
-    lv.plotVecsLambdaZWB(ax, alpha, branches, 5) #Plotagem dos vetores
+    if(alpha != 0):
+        lv.plotVecsLambdaZWB(ax, alpha, branches, 5) #Plotagem dos vetores
     #ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k', zorder = 5)
     ax.scatter(*Point, color='black', s=40, depthshade=False)
 
