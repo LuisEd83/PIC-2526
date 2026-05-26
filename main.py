@@ -11,9 +11,9 @@ Objetivos:
 import includes.Functions as fun
 import includes._Branches as b
 import includes.Auxiliar_Functions as af 
-import Parte1.Autovalues_graph as ag
-import Parte1.Coincidence_surfaces as cs
-import Parte1.Integral_curve as ic
+import Autovalues_graph as ag
+import Coincidence_surfaces as cs
+import Integral_curve as ic
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -83,20 +83,18 @@ def main():
         branches = b.Branches_point(alpha, Point, [h, N])
         colors = b.Branches_point_colors(alpha, branches)
 
-        #__________INICIALIZANDO PLOTAGEM DA CURVA RELACIONADA AOS CAMPOS__________#
+        #__________INICIALIZANDO PLOTAGEM DA CURVA INTEGRAL__________#
         ic.plotIntegralCurve(ax, Point, alpha, branches, colors)
         
-    #__________INICIALIZANDO PLOTAGEM DE GRAFICO RELACIONADO AOS VALORES DOS AUTOVALORES__________#
+    #__________INICIALIZANDO PLOTAGEM DE GRAFICO DAS VELOCIDADES__________#
     ag.lamb_graph(alpha, [h, N])
     
-    #Variaveis para grafico de autovalores
+    #__________INICIALIZANDO PLOTAGEM DA SUPERFICIE DE COINCIDENCIA__________#
     base = cs.argmin_branch(branches)
     auto_branches = b.Branches_auto([h, N], Num_z, alpha, base - 0.5, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
-    #__________INICIALIZANDO PLOTAGEM DOS PONTOS RELACIONADA AO AUTOVALOR LAMBDA-Z__________#
     cs.plotCoicindenceCurves(ax, auto_branches, auto_colors)
-
 
     #Inicia plotagem
     plt.show()

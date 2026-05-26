@@ -6,10 +6,13 @@ Objetivo:
 dos compoentes do campo a partir de um ponto inicial escolhido.
 """
 
-import includes.Campo_Ez as df
-from includes.Functions import lbdc
-from includes.Auxiliar_Functions import lambdz
-from includes.Inicia import baricentrica
+import Campo_Ez as df
+import Campo_Hugoniot as ch
+
+from Functions import lbdc
+from Auxiliar_Functions import lambdz
+from Inicia import baricentrica
+
 from numpy import array, ceil, abs, log10, sqrt
 
 #Definindo uma funcao que implementa o metodo de Euler para integracao
@@ -114,5 +117,67 @@ def Bisection_method(interval : list, bisection_config : list, function, z, alph
                     break
         
         vk += h                                #Isso direciona o Metodo da bissecao para a proxima reta horizontal
+
+    return Points
+
+
+#Relacionado ao campo de vetores de Hugonoit
+#   ->alpha:        variavel de controle
+#   ->guess_point:  Ponto inicial de chute
+#   ->Point:        Ponto inicial para a integração
+#   ->integ_config: configuração para integração
+#=> Retorno: um array numpy de pontos
+def RungeKutta4(
+        alpha              : float,
+        guess_point        : list,
+        Point              : list,
+        integ_config       : list
+) -> array:
+    #Extraindo ponto de chute
+    u0, v0, z0 = guess_point
+
+    #Extraindo ponto inicial 
+    u1, v1, z1 = Point
+
+    #Extraindo configuracao de integracao
+    h, N = integ_config
+    
+    #Inicializando variaveis para o metodo de Runge-Kutta
+    uk = u1
+    vk = v1
+    zk = z1
+
+    #Inicializando uma lista de pontos:
+    Points = [[u1, v1, z1]]
+
+    for _ in range(N):
+        #Relacionado a variavel u:
+        k1 = ch.Hug1(alpha, u0, v0, z0, uk, vk, zk)
+        k2 = ch.Hug1(alpha, u0, v0, z0, uk + (h*k1)/2, vk + (h*k1)/2, zk + (h*k1)/2)
+        k3 = ch.Hug1(alpha, u0, v0, z0, uk + (h*k2)/2, vk + (h*k2)/2, zk + (h*k2)/2)
+        k4 = ch.Hug1(alpha, u0, v0, z0, uk + (h*k3), vk + (h*k3), zk + (h*k3))
+
+        uk = uk + (h/6) * (k1 + 2*k2 + 2*k3 + k4) #Atualizo o valor de uk
+
+        #Relacionado a variavel v:
+        k1 = ch.Hug2(alpha, u0, v0, z0, uk, vk, zk)
+        k2 = ch.Hug2(alpha, u0, v0, z0, uk + (h*k1)/2, vk + (h*k1)/2, zk + (h*k1)/2)
+        k3 = ch.Hug2(alpha, u0, v0, z0, uk + (h*k2)/2, vk + (h*k2)/2, zk + (h*k2)/2)
+        k4 = ch.Hug2(alpha, u0, v0, z0, uk + (h*k3), vk + (h*k3), zk + (h*k3))
+
+        vk = vk + (h/6) * (k1 + 2*k2 + 2*k3 + k4) #Atualizo o valor de vk
+
+        #Relacionado a variavel z:
+        k1 = ch.Hug3(alpha, u0, v0, z0, uk, vk, zk)
+        k2 = ch.Hug3(alpha, u0, v0, z0, uk + (h*k1)/2, vk + (h*k1)/2, zk + (h*k1)/2)
+        k3 = ch.Hug3(alpha, u0, v0, z0, uk + (h*k2)/2, vk + (h*k2)/2, zk + (h*k2)/2)
+        k4 = ch.Hug3(alpha, u0, v0, z0, uk + (h*k3), vk + (h*k3), zk + (h*k3))
+
+        zk = zk + (h/6) * (k1 + 2*k2 + 2*k3 + k4) #Atualizo o valor de zk
+
+        Points.append([uk, vk, zk])               #Armazeno o ponto
+
+    #Definindo um array para armazenar pontos (com tamanho N + 1):
+    Points = array(Points, float)
 
     return Points
