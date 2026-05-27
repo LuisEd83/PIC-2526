@@ -91,8 +91,11 @@ def Branches_point(alpha, Point : list, integ_config : list):
     array_mh = nm.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]])   #Array com h < 0
 
     #Retirando o ponto inicial (Point):
-    array_ph = array_ph[~np.all(array_ph == Point, axis = 1)]
-    array_mh = array_mh[~np.all(array_mh == Point, axis = 1)]
+    #array_ph = array_ph[~np.all(array_ph == Point, axis = 1)]
+    #array_mh = array_mh[~np.all(array_mh == Point, axis = 1)]
+
+    array_ph = array_ph[1:]
+    array_mh = array_mh[1:]
 
     #Extraindo as colunas destes arrays:
     coluna_ph = array_ph[:, 2]
@@ -118,6 +121,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
                 array_ph = np.flip(array_ph, axis = 0) 
 
             org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
+            dist = array_ph.size()
             break
         else:
             i += 1
@@ -125,7 +129,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
         if(i == len(coluna_mh)):
             print("[ERROR] - Impossibilidade de determinar ordem")
             exit()
-
+            
     """
     
     #CRIAÇÃO DAS BRANCHES
@@ -414,3 +418,81 @@ def andar_branches(Point, branches, passo):
         point_indexes = candidatos
 
     return point_indexes
+
+
+######################################################3
+#Branches relacionadas ao Campo Hugoniot
+def Branches_Hugoniot(           
+        alpha,           #Variavel de controle
+        guess_point,     #Ponto de chute
+        Point,           #Ponto inicial para integracao
+        interval,        #Intervalo da integracao
+        number_steps     #Numero de pontos
+) -> list:
+    """
+    O que esta funcao realiza?
+    -> A partir do ponto inicial, realiza duas integracoes: uma para h > 0 e outra para h < 0 (mantendo o N);
+    -> Com a coleção dos dois pontos, eh possivel ordena-los em um unico 'array';
+    -> Com o array em maos, pode-se separa-lo em branches (pacotes) de pontos.
+    A funcao retornarah as branches da seguinte forma: [[], [], [], ..., []]
+
+
+    Adicao futura: Um metodo para correcao da curva (provavelmente Newton-Rapshon)
+    """
+
+    #------------------------------------
+    #Organizacao dos pontos:
+    #------------------------------------
+    
+    #Dicionarios de configuracao
+    config_hp0 = { #h > 0
+        's_inicial': interval[0],
+        's_final': interval[1],
+        'n_pontos': number_steps
+    }
+
+    config_hm0 = { #h < 0
+        's_inicial': interval[1], #Note que o intervalo esta invertido, o scipy identifica como h < 0
+        's_final': interval[0],
+        'n_pontos': number_steps
+    }
+
+    #array numpy para armazenar os pontos da integracao
+    array_ph = nm.runge_Kutta_Scipy(alpha, guess_point, Point, config_hp0) #h > 0
+    array_mh = nm.runge_Kutta_Scipy(alpha, guess_point, Point, config_hm0) #h < 0
+
+    #Retirada estrategica do ponto inicial:
+    array_ph = array_ph[1:]
+    array_mh = array_mh[1:]
+
+    #Extraindo as colunas destes arrays:
+    coluna_ph = array_ph[:, 2]
+    coluna_mh = array_mh[:, 2]
+
+    #Criando uma variável para armazenar os pontos na ordem correta
+    org_points = np.array([])
+
+    #Variavel de controle de laco
+    i = 0
+
+    while(1):
+        if(coluna_ph[0] - coluna_mh[i] > 0):
+            #Inverte o array se o primeiro elemento do array_mh estiver mais proximo do Point
+            if(np.linalg.norm(array_mh[-1] - Point) > np.linalg.norm(array_mh[0] - Point)): 
+                array_mh = np.flip(array_mh, axis = 0) #Inverte apenas os elementos do array
+
+            org_points = np.concatenate([array_mh, np.array(Point).reshape(1, -1), array_ph])
+            break
+        elif(coluna_ph[0] - coluna_mh[i] < 0):
+            #Inverte o array se o primeiro elemento do array_ph estiver mais proximo do Point
+            if(np.linalg.norm(array_ph[-1] - Point) > np.linalg.norm(array_ph[0] - Point)):
+                array_ph = np.flip(array_ph, axis = 0) 
+
+            org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
+            break
+        else:
+            i += 1
+
+        if(i == len(coluna_mh)):
+            print("[ERROR] - Impossibilidade de determinar ordem")
+            exit()

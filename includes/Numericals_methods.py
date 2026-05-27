@@ -6,14 +6,14 @@ Objetivo:
 dos compoentes do campo a partir de um ponto inicial escolhido.
 """
 
-import Campo_Ez as df
-import Campo_Hugoniot as ch
+import includes.Campo_Ez as df
+import includes.Campo_Hugoniot as ch
 
-from Functions import lbdc
-from Auxiliar_Functions import lambdz
-from Inicia import baricentrica
+from includes.Functions import lbdc
+from includes.Auxiliar_Functions import lambdz
+from includes.Inicia import baricentrica
 
-from numpy import array, ceil, abs, log10, sqrt
+from numpy import array, ceil, abs, log10, sqrt, linspace
 
 #Definindo uma funcao que implementa o metodo de Euler para integracao
 def Euler_method(alpha, point : list, integ_config : list):
@@ -179,5 +179,45 @@ def RungeKutta4(
 
     #Definindo um array para armazenar pontos (com tamanho N + 1):
     Points = array(Points, float)
+
+    return Points
+
+
+def runge_Kutta_Scipy(
+        alpha              : float,
+        guess_point        : list,
+        Point              : list,
+        integ_config       : dict
+):
+    import scipy.integrate as solve_ip
+
+    #Funcao que serah utilizada no runge-kutta 5 (do scipy)
+    def function(s, state : list):
+        u, v, z = state
+
+        H = ch.CampoHug(alpha, guess_point[0], guess_point[1], guess_point[2], u, v, z) 
+
+        return[H[0], H[1], H[2]]
+
+    #Configuracao para integracao
+    s_inicial = integ_config['s_inicial']
+    s_final   = integ_config['s_final']
+    n_pontos  = integ_config['n_pontos']
+
+
+    s_span = (s_inicial, s_final)                   #Intervalo de integracao
+    s_eval = linspace(s_inicial, s_final, n_pontos) #Particao do intervalo de integracao
+
+    solucao = solve_ip(
+        function,
+        s_span,
+        Point,
+        method = 'RK45',
+        t_eval = s_eval
+    )
+
+    #solucao.y tem o formato (3, N) -> 3 variáveis ao longo de N pontos
+    #solucao.y.T inverte para (N, 3) -> N pontos, cada um com 3 coordenadas [u, v, z]
+    Points = array(solucao.y.T, dtype = float)
 
     return Points

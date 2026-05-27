@@ -113,9 +113,6 @@ def lamb_graph(alpha, integ_config : list):
     for Point in iniPoints:
         #Extraio as branches:
         branches = Branches_point(alpha, Point, integ_config) #Ramos (conjunto de pontos)
-        first = lambdz(*branches[0][0], alpha)
-        last = lambdz(*branches[0][-1], alpha)
-        print(f"First : {first} | last : {last}")
 
         segments = merge_continuous_branches(branches)        #Branches de ramos contínuos
 
@@ -129,34 +126,30 @@ def lamb_graph(alpha, integ_config : list):
             j += 1
                 
 
-        #Variavel de escala (0 a 1)
-        k = []
-        c = 0  #Variavel de correcao de erro
-        tam = sum(len(branchei) for branchei in branches) #Tamanho total das branches
-        for i in range(len(branches)):
-            for _ in range(len(branches[i])):
-                c += 1
-                k.append(c/tam)                           #Reescala para o intervalo [0,1]
+        #Conta exatamente quantos pontos restaram apos a limpeza
+        total_pontos = sum(len(branchei) for branchei in branches)
 
-        if(pointInP(Point) or (not transparencia)):
-            #Variavel para armazenar a branch e o indice na branch
-            local_point = []
-            for i, branch in enumerate(branches):
-                for j, p in enumerate(branch):
-                    if(ponto_igual(p, Point)):     #Localiza o ponto dentre as branches
-                        #i = branch; j = indice na branch i
-                        local_point.append(i)
-                        local_point.append(j)
+        #Cria o vetor k variando EXATAMENTE de 0 a 1 distribuído igualmente (uma lista do intervalo)
+        k = np.linspace(0, 1, total_pontos).tolist()
 
-            dist = 0  #Variavel de distancia do primeiro ponto ate o Point 
-            if(local_point[0] == 0):
-                dist += local_point[1]
-            else:
-                for i in range(local_point[0]):
-                    dist += len(branches[i])
-                dist += local_point[1] #Corrige a distancia 
+        dist = None
+        if pointInP(Point) or (not transparencia):
+            #Variavel para armazenar o indice absoluto do ponto na malha sequencial
+            indice_absoluto = 0
+            ponto_encontrado = False
+            
+            for branch in branches:
+                for p in branch:
+                    if ponto_igual(p, Point):
+                        ponto_encontrado = True
+                        break
+                    indice_absoluto += 1 #Vai incrementando enquanto nao acha
+                if ponto_encontrado:
+                    break
 
-            dist /= tam   #Redimensiona a distancia para o intervalo [0, 1]
+            #Mapeia o indice do ponto exatamente na mesma escala do vetor k
+            #Se o total de pontos é N, os indices vão de 0 a N-1
+            dist = indice_absoluto / (total_pontos - 1)
 
         fig, ax = plot.subplots()
         lambGraphPlot(ax, Point, alpha, segments, k, dist)
