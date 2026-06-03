@@ -37,8 +37,8 @@ def points_curv(): #Esta funcao habilita os pontos na curva integral.
 #def az(z): #Da/dz
 #    return (np.cos(z)) #Derivada de a(z) em relacao a z
 
-def a(z): 
-    return np.arctan2(z)
+def a(z):
+    return np.arctan(z)
 
 def az(z): #Da/dz
     return 1/(1+z**2)

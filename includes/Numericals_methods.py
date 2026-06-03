@@ -208,7 +208,7 @@ def runge_Kutta_Scipy(
     s_span = (s_inicial, s_final)                   #Intervalo de integracao
     s_eval = linspace(s_inicial, s_final, n_pontos) #Particao do intervalo de integracao
 
-    solucao = solve_ip(
+    solucao = solve_ip.solve_ivp(
         function,
         s_span,
         Point,

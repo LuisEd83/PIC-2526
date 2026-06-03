@@ -19,7 +19,7 @@ def h0(
     if(isclose(z, z0)):
         return af.az(z) #Retorna (d/dt)(a(z)) se z = z0
     
-    return (af.a(z) - af.a(z0))/(z-z0)
+    return (af.a(z) - af.a(z0))/(z - z0)
 
 def sig(
         alpha,          #Variavel de controle
@@ -101,7 +101,7 @@ def Fz(
     return firstT - secondT
 
 def gradF(u0, v0, z0, u, v, z) -> list:
-    return [Fu(u0, v0, z0, u, v, z), Fv(u0, v0, z0, u, v, z), Fz((u0, v0, u, v, z))]
+    return [Fu(u0, v0, z0, u, v, z), Fv(u0, v0, z0, u, v, z), Fz(u0, v0, u, v, z)]
 
 ##############################
 def Gu(
@@ -114,9 +114,12 @@ def Gu(
        z        #Variaveis
        )-> float:
     
+    """
+    [Explicacao] - Esta eh a derivada pacial de G em relacao a variavel u
+    """
 
     #Definindo o primeiro termo:
-    firstT  = fun.fwu(u, v, z) * (u0*(z - z0) + alpha * (af.a(z) - af.a(z0)))
+    firstT  = fun.fwu(u, v, z) * (u0 * (z - z0) + alpha * (af.a(z) - af.a(z0)))
     
     #Definindo o segundo termo:
     secondT = fun.fw(u0, v0, z0) * (z - z0)
@@ -126,13 +129,16 @@ def Gu(
 def Gv(
        alpha,   #Variavel de controle
        u0,      #u inicial
-       v0,      #v inicial
        z0,      #z inicial
        u,       #Variaveis
        v,       #Variaveis
        z        #Variaveis
        )-> float:
     
+
+    """
+    [Explicacao] - Esta eh a derivada pacial de G em relacao a variavel v
+    """
 
     #Definindo o primeiro termo:
     firstT  = fun.fwv(u, v, z) * (u0*(z - z0) + alpha * (af.a(z) - af.a(z0)))
@@ -149,8 +155,12 @@ def Gz(
        z        #Variaveis
        )-> float:
     
+    """
+    [Explicacao] - Esta eh a derivada pacial de G em relacao a variavel z
+    """
+
     #Definindo o primeiro termo:
-    firstT  = fun.fwv(u, v, z) * (u0*(z - z0) + alpha * (af.a(z) - af.a(z0)))
+    firstT  = fun.fwc(u, v, z) * (u0*(z - z0) + alpha * (af.a(z) - af.a(z0)))
 
     #Definindo o segundo termo:
     secondT = (fun.fw(u, v, z) - fun.fw(u0, v0, z0)) * (u0 + alpha * af.az(z))
@@ -161,7 +171,7 @@ def Gz(
     return firstT + secondT - thirdT
 
 def gradG(alpha, u0, v0, z0, u, v, z):
-    return [Gu(alpha, u0, v0, z0, u, v, z), Gv(alpha, u0, v0, z0, u, v, z), Gz(alpha, u0, v0, z0, u, v, z)]
+    return [Gu(alpha, u0, v0, z0, u, v, z), Gv(alpha, u0, z0, u, v, z), Gz(alpha, u0, v0, z0, u, v, z)]
 
 ##############################
 
@@ -170,7 +180,7 @@ def Det_u(alpha, u0, v0, z0, u, v, z):
     diag_p = Fv(u0, v0, z0, u, v, z) * Gz(alpha, u0, v0, z0, u, v, z)
 
     #Definindo a diagonal secundaria
-    diag_s = Fz(u0, v0, u, v, z) * Gv(alpha, u0, v0, z0, u, v, z)
+    diag_s = Fz(u0, v0, u, v, z) * Gv(alpha, u0, z0, u, v, z)
 
     return diag_p - diag_s
 
@@ -185,10 +195,10 @@ def Det_v(alpha, u0, v0, z0, u, v, z):
 
 def Det_z(alpha, u0, v0, z0, u, v, z):
     #Definindo a diagonal principal
-    diag_p = Fu(u0, v0, z0, u, v, z) * Gv(alpha, u0, v0, z0, u, v, z)
+    diag_p = Fu(u0, v0, z0, u, v, z) * Gv(alpha, u0, z0, u, v, z)
     
     #Definindo a diagonal secundaria
-    diag_s = Fz(u0, v0, u, v, z) * Gu(alpha, u0, v0, z0, u, v, z)
+    diag_s = Fv(u0, v0, z0, u, v, z) * Gu(alpha, u0, v0, z0, u, v, z)
 
     return diag_p - diag_s
 
