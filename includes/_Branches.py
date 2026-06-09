@@ -121,7 +121,6 @@ def Branches_point(alpha, Point : list, integ_config : list):
                 array_ph = np.flip(array_ph, axis = 0) 
 
             org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
-            dist = array_ph.size()
             break
         else:
             i += 1

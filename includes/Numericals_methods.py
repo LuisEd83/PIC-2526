@@ -9,11 +9,16 @@ dos compoentes do campo a partir de um ponto inicial escolhido.
 import includes.Campo_Ez as df
 import includes.Campo_Hugoniot as ch
 
-from includes.Functions import lbdc
-from includes.Auxiliar_Functions import lambdz
+import includes.Functions as fun
 from includes.Inicia import baricentrica
 
 from numpy import array, ceil, abs, log10, sqrt, linspace
+
+def az(z): #Da/dz
+    return 1/(1+z**2)
+
+def lambdz(u, v, z, alpha):
+    return(fun.fw(u, v, z)/(u + alpha*az(z)))
 
 #Definindo uma funcao que implementa o metodo de Euler para integracao
 def Euler_method(alpha, point : list, integ_config : list):
@@ -75,7 +80,7 @@ def Bisection_method(interval : list, bisection_config : list, function, z, alph
     def d(x, y, z): #x, y, z sao o uk, vk e z 
         if(alpha != 0):
             return function(x, y, z) - lambdz(x, y, z, alpha)
-        return function(x, y, z) - lbdc(x, y, z)
+        return function(x, y, z) - fun.lbdc(x, y, z)
     
     Points = []                               #Variavel para armazenar os pontos
     altura = sqrt(3)/2 if baricentrica else 1 #Constante para controle de altura

@@ -37,6 +37,36 @@ def sig(
     return num/den
 
 ##############################
+def F(
+    u0, #Variavel do ponto fixo U0
+    v0, #Variavel do ponto fixo U0
+    z0, #Variavel do ponto fixo U0
+    u,  #Variavel do ponto U1
+    v,  #Variavel do ponto U1
+    z   #Variavel do ponto U1
+):
+    #Define-se os termos (para simplicidade):
+    firstT  = (fun.fw(u, v, z) - fun.fw(u0, v0, z0)) * (v - v0)
+    secondT = (fun.fo(u, v, z) - fun.fo(u0, v0, z0)) * (u - u0)
+
+    return firstT - secondT
+
+def G(
+    alpha,  #Varivavel de controle
+    u0,     #Varivavel do ponto fixo U0
+    v0,     #Varivavel do ponto fixo U0
+    z0,     #Varivavel do ponto fixo U0
+    u,      #Varivavel do ponto U1
+    v,      #Varivavel do ponto U1
+    z       #Varivavel do ponto U1
+):
+    #Define-se os termos (para simplicidade):
+    firstT  = (fun.fw(u, v, z) - fun.fw(u0, v0, z0)) * (u0 * (z - z0) + alpha * (af.a(z) - af.a(z0)))
+    secondT = fun.fw(u0, v0, z0) * (z - z0) * (u - u0)
+
+    return firstT - secondT
+
+##############################
 def Fu(
        u0, #u inicial
        v0, #v inicial
@@ -175,6 +205,9 @@ def gradG(alpha, u0, v0, z0, u, v, z):
 
 ##############################
 
+"""
+Determinantes montados para solucionar o sistema (atualmente (39))
+"""
 def Det_u(alpha, u0, v0, z0, u, v, z):
     #definindo a diagonal principal
     diag_p = Fv(u0, v0, z0, u, v, z) * Gz(alpha, u0, v0, z0, u, v, z)
@@ -212,11 +245,13 @@ def Hug1(alpha, u0, v0, z0, u, v, z):
     return Det_u(alpha, u0, v0, z0, u, v, z)/Norma(alpha, u0, v0, z0, u, v, z)
 
 def Hug2(alpha, u0, v0, z0, u, v, z):
-    return - Det_v(alpha, u0, v0, z0, u, v, z)/Norma(alpha, u0, v0, z0, u, v, z)
+    return -Det_v(alpha, u0, v0, z0, u, v, z)/Norma(alpha, u0, v0, z0, u, v, z)
 
 def Hug3(alpha, u0, v0, z0, u, v, z):
     return Det_z(alpha, u0, v0, z0, u, v, z)/Norma(alpha, u0, v0, z0, u, v, z)
 
 
 def CampoHug(alpha, u0, v0, z0, u, v, z):
-    return [Hug1(alpha, u0, v0, z0, u, v, z), Hug2(alpha, u0, v0, z0, u, v, z), Hug3(alpha, u0, v0, z0, u, v, z)]
+    return [Hug1(alpha, u0, v0, z0, u, v, z),
+            Hug2(alpha, u0, v0, z0, u, v, z),
+            Hug3(alpha, u0, v0, z0, u, v, z)]
