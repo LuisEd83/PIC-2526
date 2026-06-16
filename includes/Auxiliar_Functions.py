@@ -13,7 +13,7 @@ import numpy as np
 
 #Definindo funcao para determinar se o usuário quer ver ou nao os pontos dentro do prisma
 def transparencia():
-    x = 1 #x = 1 para ver apenas os pontos dentro do prisma; x = 0 e para ver todos os pontos
+    x = 0 #x = 1 para ver apenas os pontos dentro do prisma; x = 0 e para ver todos os pontos
     return x
 
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
@@ -33,15 +33,21 @@ def points_curv(): #Esta funcao habilita os pontos na curva integral.
     return x
 
 ##############################################################
-#Derivada da funcao continua e crescente no intervalo [0,1]
-#def az(z): #Da/dz
-#    return (np.cos(z)) #Derivada de a(z) em relacao a z
-
+"""
 def a(z):
     return np.arctan(z)
-
 def az(z): #Da/dz
     return 1/(1+z**2)
+"""
+
+"""
+"""
+#Funcao sigmoide 
+def a(z):
+    return 1/(1+np.exp(-5*z))
+
+def az(z):
+    return 5*a(z)*(1-a(z))
 
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))
@@ -221,3 +227,105 @@ def read_points():
             coords = list(map(float, line.split()))
             points.append(coords)
     return points
+
+#################################################################
+def hugoniotSystem(vars, u0, v0, z0, z, alpha):
+    import Campo_Hugoniot as ch
+    u_s, v_s = vars #Extrai as variaveis para ser entradas do sistema
+    return [
+        ch.F(u0, v0, z0, u_s, v_s, z),         #Funcao F
+        ch.G(alpha, u0, v0, z0, u_s, v_s, z)   #Funcao G        
+    ]
+
+def hugoniotSystemSolver(
+                        initialValue : float, #Valor inicial do intervalo da grade
+                        finalValue : float,   #Valor final do intervalo da grande
+                        Resol : int,          #Resolucao da grade
+                        enableMask : bool,    #Variavel que habilita o filtro para o triangulo
+                        u0: float,            #Componente u do ponto fixo
+                        v0: float,            #Componente v do ponto fixo
+                        z0: float,            #Componente z do ponto fixo
+                        z: float,             #Plano z constante
+                        alpha: float,         #Variavel de controle
+                        TOL = 1e-3,           #Tolerancia
+                        TOL_residual = 1e-8   #Tolerancia 
+                        ) -> list:
+    
+    """
+    [Explicacao] - Dependencias para o codigo funcionar sem aparecer
+         o problema de "chamada circular"
+    """
+    import includes.Campo_Hugoniot as ch
+    
+    from scipy.optimize import fsolve
+
+    
+    """
+    [Explicacao] - Esta eh uma funcao que soluciona o sistema de Hugoniot e, como resultado,
+                   retorna uma lista de solucoes do sistema
+    """
+
+    #Grade de valores
+    u_vals = np.linspace(initialValue, finalValue, Resol)   #Cria a reta u com 200 pontos
+    v_vals = np.linspace(initialValue, finalValue, Resol)   #Cria a reta v com 200 pontos
+    U, V   = np.meshgrid(u_vals, v_vals)      #Mescla u e v e retorna uma tupla de valores
+
+    #Mascara regioes invalidas (u + v > 1), i.e, armazena a regiao que nao eh de interesse nosso
+    mask = (U + V > 1)
+
+    ZF = ch.F(u0, v0, z0, U, V, z).astype(float)           #Cria uma 'lista' de pontos que foram varridos dados U e V acima
+    ZG = ch.G(alpha, u0, v0, z0, U, V, z).astype(float)    #Cria uma 'lista' de pontos que foram varridos dados U e V acima
+
+    #filtra da grade os pontos (u, v) onde simultaneamente |F| ≈ 0 e |G| ≈ 0
+    """
+    [Explicacao] -> Esses pontos jah estao perto da solucao real,
+                    o que aumenta a chance de convergência do fsolve
+                    (que serah utilizada posteriormente).
+    """
+
+    if(enableMask):
+        proximity = (np.abs(ZF) < TOL) & (np.abs(ZG) < TOL) & ~mask #Calcula os indices onde ZF e ZG sao proximos de 0
+    else:
+        proximity = (np.abs(ZF) < TOL) & (np.abs(ZG) < TOL) #Calcula os indices onde ZF e ZG sao proximos de 0
+
+    u_guesses = U[proximity]    #Variaveis de chute (guesses)
+    v_guesses = V[proximity]    #Variaveis de chute (guesses)
+
+    #Lista para armazenar as possiveis solucoes
+    candidatas = []
+
+    for u_g, v_g in zip(u_guesses, v_guesses):
+        try:
+            """
+            [Explicacao] -> o fsolve eh projetado para encontrar raizes
+                            de equacoes ou sistemas de equacoes nao li-
+                            neares.
+                        ->  u_g e v_g sao variaveis de chute (guess) jah
+                            filtradas anteriormente.
+            """
+            sol = fsolve(hugoniotSystem, [u_g, v_g], full_output=True)
+            u_s, v_s = sol[0]                                                            #Possivel solucao do sistema
+
+            residual = np.linalg.norm(hugoniotSystem([u_s, v_s]))                        #Calcula a norma dos valores obtidos do sistema, isto eh, a diferenca F-G dado u_s e v_s
+            inside  = (u_s > 0) and (v_s > 0) and (u_s + v_s < 1)                        #Verifica se u_s e v_s estao dentro do dominio desejado
+            not_dup = all(
+                np.linalg.norm([u_s - us, v_s - vs]) > TOL for us, vs, _ in candidatas  #Verifica se u_s e v_s nao eh duplicata de uma solucao jah encontrada
+                )
+            
+            if ((residual < TOL_residual) and (inside) and (not_dup)):
+                candidatas.append((u_s, v_s, z))
+
+        except:
+            continue
+
+    #__________LOG__________#
+    print("--------------------------------------------------")
+    print(f"Número de soluções encontradas: {len(candidatas)}")
+    print("--------------------------------------------------")
+    print("########################################################################")
+    for i in range(len(candidatas)):
+        #Print das solucoes aproximadas:
+        print(f"Solucao candidata {i+1}: {candidatas[i]}")
+    print("########################################################################")
+
+    return [U, V, ZF, ZG, candidatas]
