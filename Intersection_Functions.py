@@ -1,7 +1,8 @@
-import includes.Campo_Hugoniot as ch
+import includes.Auxiliar_Functions as af
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 
 from scipy.optimize import fsolve
 
@@ -9,12 +10,15 @@ from scipy.optimize import fsolve
 #            Variaveis globais               #
 ##############################################
 #Define-se as variaveis                      #
-alpha = 0.1                                  #
-u0, v0, z0 = 0.2, 0.6, 0.3                   #
-z = 0                                        #
+alpha = 0.0                                  #
+u0, v0, z0 = 0.3, 0.6, 0.3                   #
+z = 0.0                                      #
 num_N = 10                                   #
 dz = 1/(num_N * 100)                         #
-#Variavel para resolucao                     #
+#Variavel do grafico                         #
+iValue = 0.01                                #
+fValue = 0.99                                #
+eMask = True                                #
 factor = 2                                   #
 Resol = 500 * factor                         #
 #Variavel de tolerancia                      #
@@ -22,80 +26,26 @@ TOL_residual = 1e-8                          #
 TOL = 1e-3                                   #
 ##############################################
 
-#Sistema contendo as funcoes acima
-def hugoniotSystem(vars):
-    u_s, v_s = vars #Extrai as variaveis do sistema
-    return [
-        ch.F(u0, v0, z0, u_s, v_s, z),         #Funcoes definidas acima
-        ch.G(alpha, u0, v0, z0, u_s, v_s, z)   #Funcoes definidas acima        
-    ]
+matplotlib.use('TkAgg')  #backend mais fluido que o padrão
 
 
-#Grade de valores (respeitando u + v <= 1)
-u_vals = np.linspace(0.01, 0.98, Resol)   #Cria a reta u com 200 pontos
-v_vals = np.linspace(0.01, 0.98, Resol)   #Cria a reta v com 200 pontos
-U, V   = np.meshgrid(u_vals, v_vals)      #Mescla u e v e retorna uma tupla de valores
+U, V, ZF, ZG, _ = af.hugoniotSystemSolver(iValue, fValue, Resol, eMask, u0, v0, z0, z, alpha) #Descarto os candidatos usando _
 
 #Mascara regioes invalidas (u + v > 1), i.e, armazena a regiao que nao eh de interesse nosso
 mask = (U + V > 1)
 
-ZF = ch.F(u0, v0, z0, U, V, z).astype(float)           #Cria uma 'lista' de pontos que foram varridos dados U e V acima
-ZG = ch.G(alpha, u0, v0, z0, U, V, z).astype(float)    #Cria uma 'lista' de pontos que foram varridos dados U e V acima
-
-
-#filtra da grade os pontos (u, v) onde simultaneamente |F| ≈ 0 e |G| ≈ 0
-"""
-[Explicacao] -> Esses pontos jah estao perto da solucao real,
-                o que aumenta a chance de convergência do fsolve
-                (que serah utilizada posteriormente).
-"""
-proximity = (np.abs(ZF) < TOL) & (np.abs(ZG) < TOL) & ~mask
-u_guesses = U[proximity]    #Variaveis de chute (guesses)
-v_guesses = V[proximity]    #Variaveis de chute (guesses)
-
-#Lista para armazenar as possiveis solucoes
-candidatas = []
-
-for u_g, v_g in zip(u_guesses, v_guesses):
-    try:
-        """
-        [Explicacao] -> o fsolve eh projetado para encontrar raizes
-                        de equacoes ou sistemas de equacoes nao li-
-                        neares.
-                    ->  u_g e v_g sao variaveis de chute (guess) jah
-                        filtradas anteriormente.
-        """
-        sol = fsolve(hugoniotSystem, [u_g, v_g], full_output=True)
-        u_s, v_s = sol[0]                                                            #Possivel solucao do sistema
-
-        residual = np.linalg.norm(hugoniotSystem([u_s, v_s]))                        #Calcula a norma dos valores obtidos do sistema
-        inside  = (u_s > 0) and (v_s > 0) and (u_s + v_s < 1)                        #Verifica se u_s e v_s estao dentro do dominio desejado
-        not_dup = all(
-            np.linalg.norm([u_s - us, v_s - vs]) > TOL for us, vs, zs in candidatas  #Verifica se u_s e v_s nao eh duplicata de uma solucao jah encontrada
-            )
-        
-        if ((residual < TOL_residual) and (inside) and (not_dup)):
-            candidatas.append((u_s, v_s, z))
-
-    except:
-        continue
-
-print("--------------------------------------------------")
-print(f"Número de soluções encontradas: {len(candidatas)}")
-print("--------------------------------------------------")
-print("########################################################################")
-for i in range(len(candidatas)):
-    #Print das solucoes aproximadas:
-    print(f"Solucao candidata {i+1}: {candidatas[i]}")
-print("########################################################################")
-
 ################_______________________________PLOTAGEM_______________________________################
 #Limpa os pontos invalidos das listas acima criadas
-ZF[mask] = np.nan
-ZG[mask] = np.nan
+if(eMask):
+    ZF[mask] = np.nan
+    ZG[mask] = np.nan
 
 #Criacao da figura
-fig, ax = plt.subplots(figsize=(7, 6))
+fig = plt.figure(figsize=(14,6))
+
+#___________SUBFIGURA 1___________#
+#Variavel da primeira sub figura
+ax1 = fig.add_subplot(121)
 
 #######################################################################################################
 #Reta u + v = 1
@@ -105,23 +55,85 @@ plt.plot(u_value, v_value, linestyle = '-', color = 'k')
 #######################################################################################################
 
 #Curva F = 0 e Curva G = 0
-ax.contour(U, V, ZF, levels=[z], colors='blue',  linewidths=2)  #O level (curva de nivel) eh determinada pelo valor de z
-ax.contour(U, V, ZG, levels=[z], colors='red', linewidths=2)    #O level (curva de nivel) eh determinada pelo valor de z
+ax1.contour(U, V, ZF, levels=[0], colors='blue',  linewidths=2)  #O level (curva de nivel) eh determinada pelo valor de z
+ax1.contour(U, V, ZG, levels=[0], colors='red', linewidths=2)    #O level (curva de nivel) eh determinada pelo valor de z
+
+#Regiao onde estao localizadas as raizes do sistema
+"""
+[Explicacao] -> Esses pontos jah estao perto da solucao real,
+                o que aumenta a chance de convergência do fsolve
+                (que serah utilizada posteriormente).
+"""
+proximity = (np.abs(ZF) < TOL) & (np.abs(ZG) < TOL) & (~mask if eMask else True) #Calcula os indices onde ZF e ZG sao proximos de 0
+u_guesses = U[proximity]    #Variaveis de chute (guesses)
+v_guesses = V[proximity]    #Variaveis de chute (guesses)
+ax1.scatter(u_guesses, v_guesses, color = "gray")
 
 #Legenda manual
-ax.plot([], [], color = 'blue', label=f'F(u, v, {z}) = 0')      #Legenda -> Curva da funcao F
-ax.plot([], [], color = 'red',  label=f'G(u, v, {z}) = 0')      #Legenda -> Curva da funcao G
-ax.plot([], [], color = 'black', label = 'u + v = 1')           #Legenda -> Curva u + v = 1
+ax1.plot([], [], color = 'blue', label=f'F(u, v, {z}) = 0')      #Legenda -> Curva da funcao F
+ax1.plot([], [], color = 'red',  label=f'G(u, v, {z}) = 0')      #Legenda -> Curva da funcao G
+ax1.plot([], [], color = 'black', label = 'u + v = 1')           #Legenda -> Curva u + v = 1
+ax1.plot([], [], color = 'gray', marker = 'o', linestyle = '', label = 'Root region')
 
-#Configuracoes da figure
-ax.set_title(f'Level curve z = {z}')    #Titulo da figura
-ax.set_xlabel('u')                      #Legenda do eixo X
-ax.set_ylabel('v')                      #Legenda do eixo Y
-ax.legend()                             #Ativa a legenda
-ax.set_xlim(0, 1)                       #Limite do "plano carteziano" no eixo X     
-ax.set_ylim(0, 1)                       #Limite do "plano carteziano" no eixo Y
+#Configuracoes da primeira subfigure
+ax1.set_title(f'Level curve z = {z}')    #Titulo da figura
+ax1.set_xlabel('u')                      #Legenda do eixo X
+ax1.set_ylabel('v')                      #Legenda do eixo Y
+ax1.legend()                             #Ativa a legenda
+ax1.set_xlim(0, 1)                       #Limite do "plano carteziano" no eixo X     
+ax1.set_ylim(0, 1)                       #Limite do "plano carteziano" no eixo Y
+ax1.grid(True)
 
-plt.grid(True)                          #Habilita a grade
+#___________SUBFIGURA 2 (superficies)___________#
+#Variavel da segunda sub figura
+ax2 = fig.add_subplot(122, projection='3d')
+
+#Eh o "pulo" entre os pontos que serao selecionados
+step = 12  #Isto eh para deixar o plot mais fluido
+
+#Escolha dos pontos para plot de superficie
+Us  = U[::step, ::step]
+Vs  = V[::step, ::step]
+ZFs = ZF[::step, ::step]
+ZGs = ZG[::step, ::step]
+
+#Superficie com F(u,v,z) = 0 e G(u, v, z) = 0
+ax2.plot_surface(Us, Vs, ZFs, cmap='Blues', alpha=0.4, #alpha diz respeito a opacidade
+                 linewidth=0, antialiased=False)  #antialiased=False ajuda bastante no que diz respeito ao plot mais fluido
+
+ax2.plot_surface(Us, Vs, ZGs, cmap='Reds', alpha=0.4,
+                 linewidth=0, antialiased=False)
+
+#Legenda manual
+ax2.plot([], [], color = 'blue', label=f'F(u, v, {z})')      #Legenda -> Superficie da funcao F
+ax2.plot([], [], color = 'red',  label=f'G(u, v, {z})')      #Legenda -> Superficie da funcao G
+
+#Plot do plano values = 0
+#ax2.plot_surface(Us, Vs, np.zeros_like(Us), 
+#                 alpha=0.15, color='green', label = 'values = 0', linewidth=0)
+
+#Encontra os pontos de raiz (onde F = 0 e G = 0)
+F_root = np.abs(ZFs) < TOL #Seleciona os indices onde ZFs eh menor que TOL
+G_root = np.abs(ZGs) < TOL #Seleciona os indices onde ZGs eh menor que TOL
+
+U_F_root, V_F_root, Z_F_root = Us[F_root], Vs[F_root], ZFs[F_root] #O ultimo eh altura F = 0
+U_G_root, V_G_root, Z_G_root = Us[G_root], Vs[G_root], ZGs[G_root] #O ultimo eh altura F = 0
+
+#Plot dos pontos da interseccao
+ax2.scatter(U_F_root, V_F_root, Z_F_root, color='blue', marker = 'o', s=5, zorder = 4)
+ax2.scatter(U_G_root, V_G_root, Z_G_root, color='red', marker = 'o', s=5, zorder = 4)
+
+#Legenda manual
+ax2.plot([],[], color = 'blue', marker = 'o', linestyle = '', label = 'F = 0')
+ax2.plot([],[], color = 'red', marker = 'o', linestyle = '', label = 'G = 0')
+
+ax2.set_title('F and G surfaces')
+ax2.set_xlabel('u')
+ax2.set_ylabel('v')
+ax2.set_zlabel('value')
+ax2.legend()
+
+ax2.grid(True)                          #Habilita a grade
 plt.tight_layout()                      #Ajusta automaticamente o espaçamento
 plt.show()                              #Mostra a figura
 #######################################################################################################
