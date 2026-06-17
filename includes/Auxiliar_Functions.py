@@ -13,7 +13,7 @@ import numpy as np
 
 #Definindo funcao para determinar se o usuário quer ver ou nao os pontos dentro do prisma
 def transparencia():
-    x = 0 #x = 1 para ver apenas os pontos dentro do prisma; x = 0 e para ver todos os pontos
+    x = 1 #x = 1 para ver apenas os pontos dentro do prisma; x = 0 e para ver todos os pontos
     return x
 
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
@@ -146,9 +146,9 @@ def colorPoint(alpha, point):
         if(lambdaZ_value < lambdaS_value < lambdaF_value):
             return ['b', 'g', 'r']
         elif(lambdaS_value < lambdaZ_value < lambdaF_value):
-            return ['g', 'b', 'r'] #Adiciona a cor Vermelha
+            return ['g', 'b', 'r']
         elif(lambdaS_value < lambdaF_value < lambdaZ_value):
-            return ['r', 'b', 'g'] #Adiciona a cor Roxa
+            return ['r', 'b', 'g']
         else:
             return ['k', 'k', 'k']
         
@@ -229,14 +229,6 @@ def read_points():
     return points
 
 #################################################################
-def hugoniotSystem(vars, u0, v0, z0, z, alpha):
-    import Campo_Hugoniot as ch
-    u_s, v_s = vars #Extrai as variaveis para ser entradas do sistema
-    return [
-        ch.F(u0, v0, z0, u_s, v_s, z),         #Funcao F
-        ch.G(alpha, u0, v0, z0, u_s, v_s, z)   #Funcao G        
-    ]
-
 def hugoniotSystemSolver(
                         initialValue : float, #Valor inicial do intervalo da grade
                         finalValue : float,   #Valor final do intervalo da grande
@@ -259,10 +251,17 @@ def hugoniotSystemSolver(
     
     from scipy.optimize import fsolve
 
-    
+    def hugoniotSystem(vars, u0, v0, z0, z, alpha):
+        u_s, v_s = vars #Extrai as variaveis para ser entradas do sistema
+        return [
+            ch.F(u0, v0, z0, u_s, v_s, z),         #Funcao F
+            ch.G(alpha, u0, v0, z0, u_s, v_s, z)   #Funcao G        
+        ]
+
     """
-    [Explicacao] - Esta eh uma funcao que soluciona o sistema de Hugoniot e, como resultado,
-                   retorna uma lista de solucoes do sistema
+    [Explicacao] - Esta eh uma funcao que soluciona o sistema de Hugoniot acima e, como resultado,
+                   retorna uma lista contendo as solucoes do sistema, os valores de F, G na malha
+                   e a malha UxV.
     """
 
     #Grade de valores
@@ -283,10 +282,7 @@ def hugoniotSystemSolver(
                     (que serah utilizada posteriormente).
     """
 
-    if(enableMask):
-        proximity = (np.abs(ZF) < TOL) & (np.abs(ZG) < TOL) & ~mask #Calcula os indices onde ZF e ZG sao proximos de 0
-    else:
-        proximity = (np.abs(ZF) < TOL) & (np.abs(ZG) < TOL) #Calcula os indices onde ZF e ZG sao proximos de 0
+    proximity = (np.abs(ZF) < TOL) & (np.abs(ZG) < TOL) & (~mask if enableMask else True) #Calcula os indices onde ZF e ZG sao proximos de 0
 
     u_guesses = U[proximity]    #Variaveis de chute (guesses)
     v_guesses = V[proximity]    #Variaveis de chute (guesses)
@@ -303,16 +299,16 @@ def hugoniotSystemSolver(
                         ->  u_g e v_g sao variaveis de chute (guess) jah
                             filtradas anteriormente.
             """
-            sol = fsolve(hugoniotSystem, [u_g, v_g], full_output=True)
+            sol = fsolve(hugoniotSystem, [u_g, v_g], args=(u0, v0, z0, z, alpha), full_output=True)
             u_s, v_s = sol[0]                                                            #Possivel solucao do sistema
 
-            residual = np.linalg.norm(hugoniotSystem([u_s, v_s]))                        #Calcula a norma dos valores obtidos do sistema, isto eh, a diferenca F-G dado u_s e v_s
+            residual = np.linalg.norm(hugoniotSystem([u_s, v_s], u0, v0, z0, z, alpha))  #Calcula a norma dos valores obtidos do sistema, isto eh, a diferenca F-G dado u_s e v_s
             inside  = (u_s > 0) and (v_s > 0) and (u_s + v_s < 1)                        #Verifica se u_s e v_s estao dentro do dominio desejado
             not_dup = all(
-                np.linalg.norm([u_s - us, v_s - vs]) > TOL for us, vs, _ in candidatas  #Verifica se u_s e v_s nao eh duplicata de uma solucao jah encontrada
+                np.linalg.norm([u_s - us, v_s - vs]) > TOL for us, vs, zs in candidatas  #Verifica se u_s e v_s nao eh duplicata de uma solucao jah encontrada
                 )
             
-            if ((residual < TOL_residual) and (inside) and (not_dup)):
+            if ((residual < TOL_residual) and (inside) and (not_dup) and (u_s > 1e-9)):
                 candidatas.append((u_s, v_s, z))
 
         except:
