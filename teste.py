@@ -4,8 +4,21 @@ import includes.Inicia as ini
 import includes.Auxiliar_Functions as af
 import includes.Functions as fun
 import includes.Campo_Hugoniot as ch
+import includes._Branches as b
 
 import Euler_hug as eh
+
+#Variavel do grafico                         #
+iValue = 0.01                                #
+fValue = 0.99                                #
+eMask = True                                 #
+factor = 2                                   #
+Resol = 500 * factor                         #
+
+#Para curva
+alpha = 0.1
+fixed_point = [0.1, 0.5, 0.2]
+dz = 0.09
 
 def pointInP(Point):
     if(not af.transparencia()):
@@ -15,38 +28,15 @@ def pointInP(Point):
     else:
         return (af.if_PointInRet(Point) and (0.0 <= Point[2] <= 1.0))
 
-###fixed_point = [0.55, 0.3, 0.2]###
-fixed_point = [0.2, 0.6, 0.3]
+#_______Fixed_Points______#
+#fixed_point = [0.2, 0.6, 0.3]  #Fixed_point importante
 
-alpha = 0.0
-#Teste 1
-#Point = [0.5503759, 0.284621, 0.0]
-#Point = [0.3253, 0.5597, 0.0]
-#Point = [0.5413, 0.2924, 0.0]
-
-#Teste 2
-#Point = [0.1764, 0.6192, 0.0]
-#Point = [0.169, 0.6265, 0.0]
-Point = [0.1999999999999947, 0.5606192233373988, 0.0]
-
-#######################################################
-#Para o scipy
-integ_config1 = { #h > 0
-    's_inicial': 0.0,
-    's_final': 20.0,
-    'n_pontos': 20
-}
-
-integ_config2 = { #h < 0
-    's_inicial': 20.0,
-    's_final': 0.0,
-    'n_pontos': 20
-}
-#######################################################
+#_______Point_______#
+#Point = [0.1999999999999947, 0.5606192233373988, 0.0] #ESTE PONTO EH ESPECIAL
 
 #######################################################
 #Para as funções feitas à mão
-h, N = 0.1, 200
+h, N = 0.05, 200
 integ_config = [h, N]
 #######################################################
 
@@ -59,7 +49,7 @@ zmin, zmax = ini.concentrations()
 ax = ini.ambiente3d()
 ax.view_init(elev=30., azim=-130.) #Initial Camera Position
 
-if(af.transparencia() or 1):
+if(af.transparencia()):
     #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
     
     #Vertices do triangulo
@@ -92,24 +82,15 @@ if(af.transparencia() or 1):
     ax.set_ylabel('$v$')
     ax.set_zlabel('$z$')
 
-## Runge-Kutta feito à mão
-#P = nm.RungeKutta4(alpha, fixed_point, Point, integ_config)
-#P1 = nm.RungeKutta4(alpha, fixed_point, Point, [-integ_config[0], integ_config[1]])
 
-## Euler feito à mão
-#P = eh.Euler_method(alpha, fixed_point, Point, integ_config)
-P = eh.Euler_method(alpha, fixed_point, Point, [-integ_config[0], integ_config[1]])
-
-## Scipy
-#P = nm.runge_Kutta_Scipy(alpha, fixed_point, Point, integ_config1)
-#P1 = nm.runge_Kutta_Scipy(alpha, fixed_point, Point, integ_config2)
+P = b.Branches_Hugoniot(iValue, fValue, Resol, eMask, alpha, fixed_point, integ_config, dz)
 
 #PLot do ponto inicial
-ax.plot(Point[0], Point[1], Point[2], marker = 'o', color = 'red')
+#ax.plot(Point[0], Point[1], Point[2], marker = 'o', color = 'red')
 ax.plot(fixed_point[0], fixed_point[1], fixed_point[2], marker = 'o', color = 'blue')
 
 Points_filtered = []
-Points_filtered1 = []
+#Points_filtered1 = []
 
 print("**********************************************************")
 print("Valor das funções F e G no ponto fixo:")
@@ -118,21 +99,40 @@ print(f"Valor de G(fixed_P): {ch.G(alpha, fixed_point[0], fixed_point[1], fixed_
 print("**********************************************************")
 
 for i in range(len(P)):
-    if(pointInP(P[i]) or (not af.transparencia())):
-        Points_filtered.append(P[i])
-        print(f"Valor de F(P[{i}]): {ch.F(fixed_point[0], fixed_point[1], fixed_point[2], P[i][0], P[i][1], P[i][2])};")
-        print(f"Valor de G(P[{i}]): {ch.G(alpha, fixed_point[0], fixed_point[1], fixed_point[2], P[i][0], P[i][1], P[i][2])}")
-        print("--------------------------------------------")
+    for j in range(len(P[i])):
+
+        point = P[i][j]
+
+        if pointInP(point) or (not af.transparencia()):
+
+            Points_filtered.append(point)
+
+            print(f"Ponto [{i}][{j}]: {point}")
+
+            print(
+                f"Valor de F: "
+                f"{ch.F(fixed_point[0], fixed_point[1], fixed_point[2],
+                        point[0], point[1], point[2])}"
+            )
+
+            print(
+                f"Valor de G: "
+                f"{ch.G(alpha,
+                        fixed_point[0], fixed_point[1], fixed_point[2],
+                        point[0], point[1], point[2])}"
+            )
+
+            print("--------------------------------------------")
 
 
-for i in range(len(Points_filtered)):
+for point in Points_filtered:
     ax.plot(
-        P[i][0],
-        P[i][1],
-        P[i][2],
-        marker = '.',
-        color = 'k',
-        linestyle = '-'
+        point[0],
+        point[1],
+        point[2],
+        marker='.',
+        color='k',
+        linestyle='None'
     )
 
 """
@@ -153,3 +153,29 @@ for i in range(len(Points_filtered1)):
 """
 
 plt.show()
+
+
+
+"""
+#######################################################################################
+fixed_point = [0.4, 0.2, 0.3]
+Point = [0.400000000000119, 0.154386641840665, 0.0] 
+Solucao candidata 1: (np.float64(0.400000000000119), np.float64(0.154386641840665), 0)
+Solucao candidata 2: (np.float64(0.3765256472230938), np.float64(0.19279246676909106), 0)
+Solucao candidata 3: (np.float64(0.24279522599290781), np.float64(0.43675449656584436), 0)
+#######################################################################################
+"""
+
+"""
+## Runge-Kutta feito à mão
+#P = nm.RungeKutta4(alpha, fixed_point, Point, integ_config)
+#P1 = nm.RungeKutta4(alpha, fixed_point, Point, [-integ_config[0], integ_config[1]])
+
+## Euler feito à mão
+#P = eh.Euler_method(alpha, fixed_point, Point, integ_config)
+#P1 = eh.Euler_method(alpha, fixed_point, Point, [-integ_config[0], integ_config[1]])
+
+## Scipy
+#P = nm.runge_Kutta_Scipy(alpha, fixed_point, Point, integ_config1)
+#P1 = nm.runge_Kutta_Scipy(alpha, fixed_point, Point, integ_config2)
+"""

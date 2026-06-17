@@ -12,7 +12,7 @@ Os ramos devem:
 import includes.Numericals_methods as nm
 from includes.Inicia import baricentrica
 from includes.Functions import fw, lbdas, lbdaf 
-from includes.Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet, colorPoint
+from includes.Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet, colorPoint, hugoniotSystemSolver
 
 import numpy as np
 
@@ -421,77 +421,174 @@ def andar_branches(Point, branches, passo):
 
 ######################################################3
 #Branches relacionadas ao Campo Hugoniot
-def Branches_Hugoniot(           
-        alpha,           #Variavel de controle
-        guess_point,     #Ponto de chute
-        Point,           #Ponto inicial para integracao
-        interval,        #Intervalo da integracao
-        number_steps     #Numero de pontos
+def Branches_Hugoniot(
+        initialValue  : float, #Valor inicial do intervalo da grade
+        finalValue    : float, #Valor final do intervalo da grande
+        Resol         : int,   #Resolucao da grade
+        enableMask    : bool,  #Variavel que habilita o filtro para o triangulo           
+        alpha         : float, #Variavel de controle
+        fixed_point   : list,  #Ponto fixo
+        inteConfig    : list,  #Condiguracao da integracao
+        dz            : float  #A distancia entre dois planos
 ) -> list:
     """
+    [Explicacao]
     O que esta funcao realiza?
-    -> A partir do ponto inicial, realiza duas integracoes: uma para h > 0 e outra para h < 0 (mantendo o N);
-    -> Com a coleção dos dois pontos, eh possivel ordena-los em um unico 'array';
-    -> Com o array em maos, pode-se separa-lo em branches (pacotes) de pontos.
+    -> Integracao a partir de um ponto inicial definido a partir da funcao hugoniotSystemSolve
+       para obter arrays (branches) de pontos.
     A funcao retornarah as branches da seguinte forma: [[], [], [], ..., []]
 
 
-    Adicao futura: Um metodo para correcao da curva (provavelmente Newton-Rapshon)
+    Possivel adicao futura: Um metodo para correcao da curva (provavelmente Newton-Rapshon)
     """
 
-    #------------------------------------
-    #Organizacao dos pontos:
-    #------------------------------------
+    #-------------------------------------------------------------
+    #| Extracao de variaveis convenientes para melhor explicacao |
+    #-------------------------------------------------------------
+
+    #Extraindo h e N:
+    h, N = inteConfig
+
+    #--------------------------------------------
+    #| Calculo do primeiro ponto para integracao |
+    #--------------------------------------------
+
+    #Defini-se uma variavel para armazenar os pontos iniciais de integracao
+    bestPoint1 = []
+    bestPoint2 = [] #Isso supondo que há duas raizes no plano z = 0
+
+    #Plano z = 0
+    zinit = 0.0 #Por enquanto, define-se o ponto inicial de integracao no plano z = 0
+    _, _, _, _, candidatas = hugoniotSystemSolver(
+                                                initialValue, finalValue, Resol, enableMask,
+                                                fixed_point[0], fixed_point[1], fixed_point[2],
+                                                zinit, alpha
+                                                )
     
-    #Dicionarios de configuracao
-    config_hp0 = { #h > 0
-        's_inicial': interval[0],
-        's_final': interval[1],
-        'n_pontos': number_steps
-    }
+    #Raio de exclusão ao redor do primeiro ponto
+    exclusion_radius = 0.035  #ajuste conforme necessário
 
-    config_hm0 = { #h < 0
-        's_inicial': interval[1], #Note que o intervalo esta invertido, o scipy identifica como h < 0
-        's_final': interval[0],
-        'n_pontos': number_steps
-    }
+    if(len(candidatas) > 0):
+        #Primeiro ponto: mais proximo do fixed_point
 
-    #array numpy para armazenar os pontos da integracao
-    array_ph = nm.runge_Kutta_Scipy(alpha, guess_point, Point, config_hp0) #h > 0
-    array_mh = nm.runge_Kutta_Scipy(alpha, guess_point, Point, config_hm0) #h < 0
+        """
+        [Explicacao] - lambda eh uma funcao anonima (uma função sem nome), definida em uma linha.
+                       min varre a lista de candidatas em busca de minimizar a distancia euclidiana 
+        """
+        bestPoint1 = min(
+            candidatas,
+            key=lambda c: np.linalg.norm([c[0] - fixed_point[0],
+                                          c[1] - fixed_point[1],
+                                          c[2] - fixed_point[2]])
+        )
 
-    #Retirada estrategica do ponto inicial:
-    array_ph = array_ph[1:]
-    array_mh = array_mh[1:]
+        #Filtra candidatos fora da região de exclusão ao redor do bestPoint1
+        candidatas_validas = [
+            c for c in candidatas
+            if np.linalg.norm([c[0] - bestPoint1[0],
+                               c[1] - bestPoint1[1],
+                               c[2] - bestPoint1[2]]) > exclusion_radius
+        ]
 
-    #Extraindo as colunas destes arrays:
-    coluna_ph = array_ph[:, 2]
-    coluna_mh = array_mh[:, 2]
-
-    #Criando uma variável para armazenar os pontos na ordem correta
-    org_points = np.array([])
-
-    #Variavel de controle de laco
-    i = 0
-
-    while(1):
-        if(coluna_ph[0] - coluna_mh[i] > 0):
-            #Inverte o array se o primeiro elemento do array_mh estiver mais proximo do Point
-            if(np.linalg.norm(array_mh[-1] - Point) > np.linalg.norm(array_mh[0] - Point)): 
-                array_mh = np.flip(array_mh, axis = 0) #Inverte apenas os elementos do array
-
-            org_points = np.concatenate([array_mh, np.array(Point).reshape(1, -1), array_ph])
-            break
-        elif(coluna_ph[0] - coluna_mh[i] < 0):
-            #Inverte o array se o primeiro elemento do array_ph estiver mais proximo do Point
-            if(np.linalg.norm(array_ph[-1] - Point) > np.linalg.norm(array_ph[0] - Point)):
-                array_ph = np.flip(array_ph, axis = 0) 
-
-            org_points = np.concatenate([array_ph, np.array(Point).reshape(1, -1), array_mh])
-            break
+        #Segundo ponto: mais distante do bestPoint1 (fora da regiao de exclusão)
+        if(len(candidatas_validas) > 0):
+            bestPoint2 = max(
+                candidatas_validas,
+                key=lambda c: np.linalg.norm([c[0] - bestPoint1[0],
+                                            c[1] - bestPoint1[1],
+                                            c[2] - bestPoint1[2]])
+            )
         else:
-            i += 1
+            print("Nenhum segundo ponto válido fora da região de exclusão.")
+            bestPoint2 = None
+    else:
+        print("Nenhum candidato encontrado.")
+        return []
 
-        if(i == len(coluna_mh)):
-            print("[ERROR] - Impossibilidade de determinar ordem")
-            exit()
+    #----------------------------------------------------------
+    #Integracao a partir dos pontos determinados anteriormente|
+    #---------------------------------------------------------
+
+    """
+    [Explicacao] - Buscando uma solucao geral, pensei em integrar a partir dos pontos determinados anteriormen-
+                   te ateh um valor proximo ao plano z = z0, quando o ponto estiver proximo ao plano z = z0, 
+                   quebro a integracao, defino um outro plano z = z1 acima do plano z = z0 (ou abaixo, se neces-
+                   sario) e calculo o proximo ponto-solucao mais proximo do ultimo ponto anterior, i.e, o ponto
+                   cujo componente z eh proximo a z = z0 e integro a partir deste novo ponto. Ademais, faco isso
+                   sucessivamente, ateh a integracao encontrar o seu fim ao calcular os N pontos.
+
+                 - Separandos os pontos em pacotes (que eh possivel fazer a partir das quebras do fluxo de in-
+                   tegracao), terei as Branches de forma facil e, alem disso, os pontos ja estarao ordenados
+                   (por conta do comportamento do algoritmo).
+    """
+
+    #Definindo a variavel Branch
+    branches = []
+
+    #Definindo a variavel arr para armazenar o array atual
+    arr = []
+
+    for bestPoint in filter(None, [bestPoint1, bestPoint2]):
+        while(True):
+            #Recalcula autovalores para o bestPoint atual
+            lambdaS_value = lbdas(*bestPoint)
+            lambdaF_value = lbdaf(*bestPoint)
+            lambdaZ_value = lambdz(*bestPoint, alpha)
+
+            #Define sentido da integracao
+            if (lambdaZ_value < lambdaS_value) or (lambdaF_value < lambdaZ_value):
+                arr = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [h, N])
+            else:
+                arr = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [-h, N])
+
+            #Armazeno os pontos
+            branches.append(arr)
+
+            #Condicao de parada 1: curva voltou ao plano z = 0
+            """
+            [Explicacao] - Se algum ponto da integracao estiver proximo do plano z = 0,
+                           quer dizer que a curva voltou e, portanto, deve-se finalizar o 
+                           fluxo.
+            """
+            if(abs(arr[-1][2]) < 1e-3):
+                break
+
+            #Condicao de parada 2: array insuficiente
+            if(len(arr) < 2):
+                print("Array insuficiente para continuar.")
+                break
+
+            #Define o próximo plano
+            if arr[-1][2] - arr[-2][2] > 0:
+                zinit = arr[-1][2] + dz
+            else:
+                zinit = arr[-1][2] - dz
+
+            _, _, _, _, candidatas = hugoniotSystemSolver(
+                                        initialValue, finalValue, Resol, enableMask,
+                                        fixed_point[0], fixed_point[1], fixed_point[2],
+                                        zinit, alpha
+                                        )
+
+            if(len(candidatas) > 0):
+                """
+                [Explicacao] - Como explicado, devo encontrar o candidato mais proximo do ultimo elemento
+                            do array calculado, mantendo, assim, a consistencia da integracao 
+                """
+                bestPoint = min(
+                    candidatas,
+                    key=lambda c: np.linalg.norm([c[0] - arr[-1][0],
+                                                c[1] - arr[-1][1],
+                                                c[2] - arr[-1][2]])
+                )
+            else:
+                print("Nenhum candidato encontrado.")
+                #"Condicao de parada 3": nao encontrou nenhum candidato
+                break
+
+    #---------------------------------------------
+    #|Filtro os pontos que estao dentro do Prisma|
+    #---------------------------------------------
+    return branches
+
+

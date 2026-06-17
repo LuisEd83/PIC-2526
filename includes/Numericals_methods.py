@@ -134,12 +134,12 @@ def Bisection_method(interval : list, bisection_config : list, function, z, alph
 #=> Retorno: um array numpy de pontos
 def RungeKutta4(
         alpha              : float,
-        guess_point        : list,
+        fixed_point        : list,
         Point              : list,
         integ_config       : list
 ) -> array:
     #Extraindo ponto de chute
-    u0, v0, z0 = guess_point
+    u0, v0, z0 = fixed_point
 
     #Extraindo ponto inicial 
     u1, v1, z1 = Point
@@ -156,6 +156,7 @@ def RungeKutta4(
     Points = [[u1, v1, z1]]
 
     for _ in range(N):
+
         #Relacionado a variavel u:
         k1 = ch.Hug1(alpha, u0, v0, z0, uk, vk, zk)
         k2 = ch.Hug1(alpha, u0, v0, z0, uk + (h*k1)/2, vk + (h*k1)/2, zk + (h*k1)/2)
@@ -180,13 +181,16 @@ def RungeKutta4(
 
         zk = zk + (h/6) * (k1 + 2*k2 + 2*k3 + k4) #Atualizo o valor de zk
 
+        #Por conta da construcao do problema:
+        if(abs(zk - z0) < 2e-1): #zk nao deve ficar proximo de z0
+            break
+
         Points.append([uk, vk, zk])               #Armazeno o ponto
 
     #Definindo um array para armazenar pontos (com tamanho N + 1):
     Points = array(Points, float)
 
     return Points
-
 
 def runge_Kutta_Scipy(
         alpha              : float,
@@ -225,4 +229,45 @@ def runge_Kutta_Scipy(
     #solucao.y.T inverte para (N, 3) -> N pontos, cada um com 3 coordenadas [u, v, z]
     Points = array(solucao.y.T, dtype = float)
 
+    return Points
+
+def HugonioutEuler_method(alpha, fixed_point : list, P_chute : list, integ_config : list):
+    #Extraindo ponto fixado
+    u0, v0, z0 = fixed_point 
+
+    #Extraindo ponto inicial para integracao
+    u1, v1, z1 = P_chute #U1
+
+    #Extraindo configuracao de integracao
+    h, N = integ_config
+    
+    #Inicializando variaveis para o metodo de Euler
+    uk = u1
+    vk = v1
+    zk = z1
+
+    #Inicializando uma lista de pontos:
+    Points = [[u1, v1, z1]]
+
+    #Calculando e armazenando os resultados do metodo de Euler:
+    for _ in range(N): #O laco vai repetir N vezes
+        #Realizo o passo (obs: kp1 = k + 1)
+        #(alpha, u0, v0, z0, u, v, z):
+        ukp1 = uk + h * ch.Hug1(alpha, u0, v0, z0, uk, vk, zk)
+        vkp1 = vk + h * ch.Hug2(alpha, u0, v0, z0, uk, vk, zk)
+        zkp1 = zk + h * ch.Hug3(alpha, u0, v0, z0, uk, vk, zk)
+
+        if(abs(zkp1 - z0) < 1e-3):
+            break
+
+        #Armazenando os valores na lista de pontos
+        Points.append([ukp1, vkp1, zkp1])
+
+        #Atualizo os valores das variaives uk, vk e zk 
+        uk = ukp1
+        vk = vkp1
+        zk = zkp1
+
+    #Definindo um array para armazenar pontos (com tamanho N + 1):
+    Points = array(Points, float)
     return Points

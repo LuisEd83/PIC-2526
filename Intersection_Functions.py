@@ -4,21 +4,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 
-from scipy.optimize import fsolve
-
 ##############################################
 #            Variaveis globais               #
 ##############################################
 #Define-se as variaveis                      #
-alpha = 0.0                                  #
-u0, v0, z0 = 0.3, 0.6, 0.3                   #
-z = 0.0                                      #
+alpha = 0.1                                  #
+u0, v0, z0 = 0.1, 0.5, 0.2                   #
+z = 0.7                                     #
 num_N = 10                                   #
 dz = 1/(num_N * 100)                         #
 #Variavel do grafico                         #
 iValue = 0.01                                #
 fValue = 0.99                                #
-eMask = True                                #
+eMask = True                                 #
 factor = 2                                   #
 Resol = 500 * factor                         #
 #Variavel de tolerancia                      #
@@ -55,7 +53,7 @@ plt.plot(u_value, v_value, linestyle = '-', color = 'k')
 #######################################################################################################
 
 #Curva F = 0 e Curva G = 0
-ax1.contour(U, V, ZF, levels=[0], colors='blue',  linewidths=2)  #O level (curva de nivel) eh determinada pelo valor de z
+ax1.contour(U, V, ZF, levels=[0], colors='blue', linewidths=2)   #O level (curva de nivel) eh determinada pelo valor de z
 ax1.contour(U, V, ZG, levels=[0], colors='red', linewidths=2)    #O level (curva de nivel) eh determinada pelo valor de z
 
 #Regiao onde estao localizadas as raizes do sistema
