@@ -13,6 +13,7 @@ import includes.Numericals_methods as nm
 from includes.Inicia import baricentrica
 from includes.Functions import fw, lbdas, lbdaf 
 from includes.Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet, colorPoint, hugoniotSystemSolver
+from includes.Campo_Hugoniot import Hug3
 
 import numpy as np
 
@@ -429,7 +430,8 @@ def Branches_Hugoniot(
         alpha         : float, #Variavel de controle
         fixed_point   : list,  #Ponto fixo
         inteConfig    : list,  #Condiguracao da integracao
-        dz            : float  #A distancia entre dois planos
+        dz            : float, #A distancia entre dois planos
+        TOL = 1e-3             #Tolerancia
 ) -> list:
     """
     [Explicacao]
@@ -449,24 +451,31 @@ def Branches_Hugoniot(
     #Extraindo h e N:
     h, N = inteConfig
 
-    #--------------------------------------------
-    #| Calculo do primeiro ponto para integracao |
-    #--------------------------------------------
+    #Extraindo o ponto fixo:
+    u0, v0, z0 = fixed_point
+
+    #----------------------------------------------------------
+    #| Calculo do primeiro conjunto de pontos para integracao |
+    #---------------------------------------------------------
 
     #Defini-se uma variavel para armazenar os pontos iniciais de integracao
-    bestPoint1 = []
-    bestPoint2 = [] #Isso supondo que há duas raizes no plano z = 0
+    bestPoint1 = None
+    bestPoint2 = None #Isso supondo que há duas raizes no plano z = 0
 
-    #Plano z = 0
-    zinit = 0.0 #Por enquanto, define-se o ponto inicial de integracao no plano z = 0
+    #Plano z = constante
+    """
+    [Explicacao] - NO caso limite, z0 pode ser igual a 0.0, logo deve-se integrar a partir de um
+                   plano um pouco acima.
+    """
+    zinit = 0.0 if (z0 > TOL) else 0.05
     _, _, _, _, candidatas = hugoniotSystemSolver(
                                                 initialValue, finalValue, Resol, enableMask,
-                                                fixed_point[0], fixed_point[1], fixed_point[2],
+                                                u0, v0, z0,
                                                 zinit, alpha
                                                 )
     
-    #Raio de exclusão ao redor do primeiro ponto
-    exclusion_radius = 0.035  #ajuste conforme necessário
+    #Raio de exclusão ao redor do primeiro ponto encontrado no plano
+    exclusion_radius = 0.035  #ajuste conforme necessario
 
     if(len(candidatas) > 0):
         #Primeiro ponto: mais proximo do fixed_point
@@ -477,9 +486,9 @@ def Branches_Hugoniot(
         """
         bestPoint1 = min(
             candidatas,
-            key=lambda c: np.linalg.norm([c[0] - fixed_point[0],
-                                          c[1] - fixed_point[1],
-                                          c[2] - fixed_point[2]])
+            key=lambda c: np.linalg.norm([c[0] - u0,
+                                          c[1] - v0,
+                                          c[2] - z0])
         )
 
         #Filtra candidatos fora da região de exclusão ao redor do bestPoint1
@@ -505,6 +514,64 @@ def Branches_Hugoniot(
         print("Nenhum candidato encontrado.")
         return []
 
+
+    #--------------------------------------------------------
+    #| Calculo do segundo conjunto de pontos para integracao|
+    #-------------------------------------------------------
+
+    """
+    [Explicacao] - A ideia aqui eh encontrar outros pontos em um outro plano z = constante
+                   tal que z0 < constante =< 1.0 usando uma estrategia semelhante a bis-
+                   seccao.
+                 - O caso limite aqui eh quando z0 = 1.0... Neste caso eh soh nao procurar
+                   outros pontos-solucao do sistema e integrar a partir do plano z = 0.0.
+    """
+    
+    #Plano de busca: z = 0.85 (ou 0.95 se z0 estiver próximo)
+    z_const = 0.95 if (abs(z0 - 0.5) < TOL) else 0.5
+
+    cand = []
+    if(abs(z0 - 1.0) > TOL):
+        _, _, _, _, cand = hugoniotSystemSolver(
+                                initialValue, finalValue, Resol, enableMask,
+                                u0, v0, z0,
+                                z_const, alpha
+                                )
+
+    #Selecao dos pontos em z = z_const
+    bestPoint3 = None
+    bestPoint4 = None
+
+    if(len(cand) > 0):
+        #Primeiro ponto: mais proximo do fixed_point
+        bestPoint3 = min(
+            cand,
+            key=lambda c: np.linalg.norm([c[0] - u0,
+                                          c[1] - v0,
+                                          c[2] - z0])
+        )
+
+        #Filtra candidatos fora da regiao de exclusao ao redor do bestPoint3
+        cand_validas = [
+            c for c in cand
+            if np.linalg.norm([c[0] - bestPoint3[0],
+                               c[1] - bestPoint3[1],
+                               c[2] - bestPoint3[2]]) > exclusion_radius
+        ]
+
+        #Segundo ponto: mais distante do bestPoint3
+        if(len(cand_validas) > 0):
+            bestPoint4 = max(
+                cand_validas,
+                key=lambda c: np.linalg.norm([c[0] - bestPoint3[0],
+                                              c[1] - bestPoint3[1],
+                                              c[2] - bestPoint3[2]])
+            )
+        else:
+            print("Nenhum segundo ponto válido em z = z_const.")
+
+    
+
     #----------------------------------------------------------
     #Integracao a partir dos pontos determinados anteriormente|
     #---------------------------------------------------------
@@ -512,10 +579,11 @@ def Branches_Hugoniot(
     """
     [Explicacao] - Buscando uma solucao geral, pensei em integrar a partir dos pontos determinados anteriormen-
                    te ateh um valor proximo ao plano z = z0, quando o ponto estiver proximo ao plano z = z0, 
-                   quebro a integracao, defino um outro plano z = z1 acima do plano z = z0 (ou abaixo, se neces-
-                   sario) e calculo o proximo ponto-solucao mais proximo do ultimo ponto anterior, i.e, o ponto
-                   cujo componente z eh proximo a z = z0 e integro a partir deste novo ponto. Ademais, faco isso
-                   sucessivamente, ateh a integracao encontrar o seu fim ao calcular os N pontos.
+                   quebro a integracao.
+                   Definido um outro plano z = z1 entre o plano z = z0 e z = 1 (calculado via "busca binaria) e
+                   calculo o proximo ponto-solucao (vao surgir alguns, entao devo escolher de forma precisa um
+                   deles) e, com este ponto, inicio uma nova integracao em duas direcoes (analogo ao procedi-
+                   mento anterior envolvendo o outro campo).
 
                  - Separandos os pontos em pacotes (que eh possivel fazer a partir das quebras do fluxo de in-
                    tegracao), terei as Branches de forma facil e, alem disso, os pontos ja estarao ordenados
@@ -528,67 +596,55 @@ def Branches_Hugoniot(
     #Definindo a variavel arr para armazenar o array atual
     arr = []
 
+    """
+    [Explicacao] - O trecho abaixo define um ou dois ramos iniciais a partir dos pontos encontrados
+                   anteriormente.
+    """
     for bestPoint in filter(None, [bestPoint1, bestPoint2]):
-        while(True):
-            #Recalcula autovalores para o bestPoint atual
-            lambdaS_value = lbdas(*bestPoint)
-            lambdaF_value = lbdaf(*bestPoint)
-            lambdaZ_value = lambdz(*bestPoint, alpha)
+        #Define o sentido da integracao:
+        """
+        [Explicacao] - Fica mais facil definir o sentido da integracao calculando apenas a componente
+                       z do campo Hugoniot.
+                     - A linha abaixo atribui 1 a variavel sense se o terceiro componente do campo for
+                       maior que 0, caso contrario atribui 0
+        """
+        sense = 1 if (Hug3(alpha, u0, v0, z0, bestPoint[0], bestPoint[1], bestPoint[2]) > 0) else 0
 
-            #Define sentido da integracao
-            if (lambdaZ_value < lambdaS_value) or (lambdaF_value < lambdaZ_value):
-                arr = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [h, N])
-            else:
-                arr = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [-h, N])
+        #Com o sentido, faz-se a integracao
+        if(sense):
+            arr = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [h, N])
+        else:
+            arr = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [-h, N])
+        
+        #Armazeno os pontos
+        branches.append(arr)
 
-            #Armazeno os pontos
-            branches.append(arr)
 
-            #Condicao de parada 1: curva voltou ao plano z = 0
-            """
-            [Explicacao] - Se algum ponto da integracao estiver proximo do plano z = 0,
-                           quer dizer que a curva voltou e, portanto, deve-se finalizar o 
-                           fluxo.
-            """
-            if(abs(arr[-1][2]) < 1e-3):
-                break
+    """
+    [Explicacao] - O trecho abaixo define um ou dois ramos a partir dos pontos calculados
+                   em um plano z = constante.
+                 - Claro, possa ser que nao haja esses ramos, pois, em um caso limite, z0
+                   eh justamente 1.0, logo, integrando a partir de z = 0.0, teria a curva
+                   integral inteira.
+    """
 
-            #Condicao de parada 2: array insuficiente
-            if(len(arr) < 2):
-                print("Array insuficiente para continuar.")
-                break
 
-            #Define o próximo plano
-            if arr[-1][2] - arr[-2][2] > 0:
-                zinit = arr[-1][2] + dz
-            else:
-                zinit = arr[-1][2] - dz
+    #Ramos a partir de z = z_const (bestPoint3 e, se necessario, bestPoint4)
+    #bestPoint4 so eh integrado se nao houver solucao dupla em z = zinit
+    pontos_superiores = [bestPoint3]
+    if(bestPoint2 is not None):
+        pontos_superiores.append(bestPoint4)
 
-            _, _, _, _, candidatas = hugoniotSystemSolver(
-                                        initialValue, finalValue, Resol, enableMask,
-                                        fixed_point[0], fixed_point[1], fixed_point[2],
-                                        zinit, alpha
-                                        )
+    for bestPoint in filter(None, pontos_superiores):
+        sense = 1 if (Hug3(alpha, u0, v0, z0, bestPoint[0], bestPoint[1], bestPoint[2]) > 0) else 0
 
-            if(len(candidatas) > 0):
-                """
-                [Explicacao] - Como explicado, devo encontrar o candidato mais proximo do ultimo elemento
-                            do array calculado, mantendo, assim, a consistencia da integracao 
-                """
-                bestPoint = min(
-                    candidatas,
-                    key=lambda c: np.linalg.norm([c[0] - arr[-1][0],
-                                                c[1] - arr[-1][1],
-                                                c[2] - arr[-1][2]])
-                )
-            else:
-                print("Nenhum candidato encontrado.")
-                #"Condicao de parada 3": nao encontrou nenhum candidato
-                break
+        arr_pos = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [ h, N])
+        arr_neg = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [-h, N])
+
+        branches.append(arr_pos)
+        branches.append(arr_neg)
 
     #---------------------------------------------
     #|Filtro os pontos que estao dentro do Prisma|
     #---------------------------------------------
     return branches
-
-
