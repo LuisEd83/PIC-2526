@@ -33,6 +33,7 @@ def points_curv(): #Esta funcao habilita os pontos na curva integral.
     return x
 
 ##############################################################
+
 """
 def a(z):
     return np.arctan(z)
@@ -40,14 +41,15 @@ def az(z): #Da/dz
     return 1/(1+z**2)
 """
 
-"""
-"""
-#Funcao sigmoide 
+
+#Funcao sigmoide
+#Supondo k pequeno:
+k = 0.01
 def a(z):
-    return 1/(1+np.exp(-5*z))
+    return 1/(1+np.exp(-k*z)) - 0.5
 
 def az(z):
-    return 5*a(z)*(1-a(z))
+    return k*a(z)*(1-a(z))
 
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))
@@ -303,12 +305,12 @@ def hugoniotSystemSolver(
             u_s, v_s = sol[0]                                                            #Possivel solucao do sistema
 
             residual = np.linalg.norm(hugoniotSystem([u_s, v_s], u0, v0, z0, z, alpha))  #Calcula a norma dos valores obtidos do sistema, isto eh, a diferenca F-G dado u_s e v_s
-            inside  = (u_s > 0) and (v_s > 0) and (u_s + v_s < 1)                        #Verifica se u_s e v_s estao dentro do dominio desejado
+            inside  = (u_s > 1e-9) and (v_s > 1e-9) and (u_s + v_s < 1)                        #Verifica se u_s e v_s estao dentro do dominio desejado
             not_dup = all(
                 np.linalg.norm([u_s - us, v_s - vs]) > TOL for us, vs, zs in candidatas  #Verifica se u_s e v_s nao eh duplicata de uma solucao jah encontrada
                 )
             
-            if ((residual < TOL_residual) and (inside) and (not_dup) and (u_s > 1e-9)):
+            if ((residual < TOL_residual) and (inside) and (not_dup)):
                 candidatas.append((u_s, v_s, z))
 
         except:
