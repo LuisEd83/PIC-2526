@@ -1,4 +1,5 @@
 import includes.Auxiliar_Functions as af
+import includes.Campo_Hugoniot as ch
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,9 +9,9 @@ import matplotlib
 #            Variaveis globais               #
 ##############################################
 #Define-se as variaveis                      #
-alpha = 0.1                                  #
-u0, v0, z0 = 0.1, 0.5, 0.2                   #
-z = 0.7                                     #
+alpha = 0.5                                  #
+u0, v0, z0 = 0.5, 0.3, 0.2                   #
+z = 1.0                                     #
 num_N = 10                                   #
 dz = 1/(num_N * 100)                         #
 #Variavel do grafico                         #
@@ -26,8 +27,21 @@ TOL = 1e-3                                   #
 
 matplotlib.use('TkAgg')  #backend mais fluido que o padrão
 
+U, V, ZF, ZG, c = af.hugoniotSystemSolver(iValue, fValue, Resol, eMask, u0, v0, z0, z, alpha) #Descarto os candidatos usando _
 
-U, V, ZF, ZG, _ = af.hugoniotSystemSolver(iValue, fValue, Resol, eMask, u0, v0, z0, z, alpha) #Descarto os candidatos usando _
+print("--------------------------")
+print("Valor campo Hugoniot:")
+for i in range(len(c)):
+    print(f"Ponto [{c[i][0], c[i][1], c[i][2]}]: ({ch.CampoHug(alpha, u0, v0, z0, c[i][0], c[i][1], c[i][2])})")
+print("--------------------------")
+
+print("--------------------------")
+print("Valor do lambdaZ no ponto de interseccao:")
+for i in range(len(c)):
+    print(f"Ponto {i+1}: {af.lambdz(*c[i], alpha)}")
+print("Valor do lambdaZ no ponto fixo:")
+print(f"Ponto (fixo): {af.lambdz(u0, v0, z0, alpha)}")
+print("--------------------------")
 
 #Mascara regioes invalidas (u + v > 1), i.e, armazena a regiao que nao eh de interesse nosso
 mask = (U + V > 1)
@@ -107,9 +121,6 @@ ax2.plot([], [], color = 'blue', label=f'F(u, v, {z})')      #Legenda -> Superfi
 ax2.plot([], [], color = 'red',  label=f'G(u, v, {z})')      #Legenda -> Superficie da funcao G
 
 #Plot do plano values = 0
-#ax2.plot_surface(Us, Vs, np.zeros_like(Us), 
-#                 alpha=0.15, color='green', label = 'values = 0', linewidth=0)
-
 #Encontra os pontos de raiz (onde F = 0 e G = 0)
 F_root = np.abs(ZFs) < TOL #Seleciona os indices onde ZFs eh menor que TOL
 G_root = np.abs(ZGs) < TOL #Seleciona os indices onde ZGs eh menor que TOL

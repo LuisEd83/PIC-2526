@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 #Definindo constantes:
 h = 0.01        #Passo do metodo de Euler
 N = 500        #Numero de realizacao de passo
-alpha = 0    #Variável de controle
+alpha = 0.0    #Variável de controle
 Num_z = 20      #Numero de curvas de nivel
 
 #Definindo a funcao principal de plot
@@ -82,9 +82,6 @@ def main():
         #Variavel que armazena as branches
         branches = b.Branches_point(alpha, Point, [h, N])
         colors = b.Branches_point_colors(alpha, branches)
-
-        #print(f"Primeiro ponto {branches[0][0]} | Último ponto {branches[0][-1]}")
-        #print(f"Primeiro ponto {branches[2][0]} | Último ponto {branches[2][-1]}")
 
         #__________INICIALIZANDO PLOTAGEM DA CURVA INTEGRAL__________#
         ic.plotIntegralCurve(ax, Point, alpha, branches, colors)

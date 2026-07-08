@@ -5,6 +5,7 @@ import includes.Auxiliar_Functions as af
 import includes.Functions as fun
 import includes.Campo_Hugoniot as ch
 import includes._Branches as b
+import numpy as np
 
 #Variavel do grafico                         #
 iValue = 0.01                                #
@@ -15,26 +16,12 @@ Resol = 500 * factor                         #
 
 #Para curva
 alpha = 0.1
-fixed_point = [0.55, 0.3, 0.2]
-dz = 0.1
-
-def pointInP(Point):
-    if(not af.transparencia()):
-        return 1
-    if(ini.baricentrica()):
-        return (af.if_PointInEq(Point) and (0.0 <= Point[2] <= 1.0))
-    else:
-        return (af.if_PointInRet(Point) and (0.0 <= Point[2] <= 1.0))
-
-#_______Fixed_Points______#
-#fixed_point = [0.2, 0.6, 0.3]  #Fixed_point importante
-
-#_______Point_______#
-#Point = [0.1999999999999947, 0.5606192233373988, 0.0] #ESTE PONTO EH ESPECIAL
+fixed_point = [0.5, 0.3, 0.2]
+#0.1 0.3 0.2
 
 #######################################################
 #Para as funções feitas à mão
-h, N = 0.05, 200
+h, N = 0.01, 500
 integ_config = [h, N]
 #######################################################
 
@@ -81,14 +68,10 @@ if(af.transparencia()):
     ax.set_zlabel('$z$')
 
 
-P = b.Branches_Hugoniot(iValue, fValue, Resol, eMask, alpha, fixed_point, integ_config, dz)
+branches = b.Branches_Hugoniot(iValue, fValue, Resol, eMask, alpha, fixed_point, integ_config)
 
-#PLot do ponto inicial
-#ax.plot(Point[0], Point[1], Point[2], marker = 'o', color = 'red')
-ax.plot(fixed_point[0], fixed_point[1], fixed_point[2], marker = 'o', color = 'blue')
-
-Points_filtered = []
-#Points_filtered1 = []
+#Plot do ponto fixo
+ax.plot(fixed_point[0], fixed_point[1], fixed_point[2], marker='o', color='blue')
 
 print("**********************************************************")
 print("Valor das funções F e G no ponto fixo:")
@@ -96,84 +79,23 @@ print(f"Valor de F(fixed_P): {ch.F(fixed_point[0], fixed_point[1], fixed_point[2
 print(f"Valor de G(fixed_P): {ch.G(alpha, fixed_point[0], fixed_point[1], fixed_point[2], fixed_point[0], fixed_point[1], fixed_point[2])}")
 print("**********************************************************")
 
-for i in range(len(P)):
-    for j in range(len(P[i])):
+print(f"Tamanho das branches = {len(branches)}")
 
-        point = P[i][j]
+for i, branch in enumerate(branches):
+    if len(branch) == 0:
+        continue
 
-        if (pointInP(point) or (not af.transparencia())):
+    branch = np.array(branch)
 
-            Points_filtered.append(point)
+    print(f"[Branch {i}] {len(branch)} pontos")
 
-            print(f"Ponto [{i}][{j}]: {point}")
-
-            print(
-                f"Valor de F: "
-                f"{ch.F(fixed_point[0], fixed_point[1], fixed_point[2],
-                        point[0], point[1], point[2])}"
-            )
-
-            print(
-                f"Valor de G: "
-                f"{ch.G(alpha,
-                        fixed_point[0], fixed_point[1], fixed_point[2],
-                        point[0], point[1], point[2])}"
-            )
-
-            print("--------------------------------------------")
-
-
-for point in Points_filtered:
     ax.plot(
-        point[0],
-        point[1],
-        point[2],
-        marker='.',
-        color='k',
-        linestyle='None'
+        branch[:, 0],
+        branch[:, 1],
+        branch[:, 2],
+        marker='o',
+        linestyle='-',
+        markersize=2
     )
-
-"""
-for i in range(len(P1)):
-    if(pointInP(P1[i]) or (not af.transparencia())):
-        Points_filtered1.append(P1[i])
-
-for i in range(len(Points_filtered1)):
-    ax.plot(
-        P1[i][0],
-        P1[i][1],
-        P1[i][2],
-        marker = 'o',
-        color = 'k',
-        linestyle = '-'
-    )
-        
-"""
 
 plt.show()
-
-
-
-"""
-#######################################################################################
-fixed_point = [0.4, 0.2, 0.3]
-Point = [0.400000000000119, 0.154386641840665, 0.0] 
-Solucao candidata 1: (np.float64(0.400000000000119), np.float64(0.154386641840665), 0)
-Solucao candidata 2: (np.float64(0.3765256472230938), np.float64(0.19279246676909106), 0)
-Solucao candidata 3: (np.float64(0.24279522599290781), np.float64(0.43675449656584436), 0)
-#######################################################################################
-"""
-
-"""
-## Runge-Kutta feito à mão
-#P = nm.RungeKutta4(alpha, fixed_point, Point, integ_config)
-#P1 = nm.RungeKutta4(alpha, fixed_point, Point, [-integ_config[0], integ_config[1]])
-
-## Euler feito à mão
-#P = eh.Euler_method(alpha, fixed_point, Point, integ_config)
-#P1 = eh.Euler_method(alpha, fixed_point, Point, [-integ_config[0], integ_config[1]])
-
-## Scipy
-#P = nm.runge_Kutta_Scipy(alpha, fixed_point, Point, integ_config1)
-#P1 = nm.runge_Kutta_Scipy(alpha, fixed_point, Point, integ_config2)
-"""

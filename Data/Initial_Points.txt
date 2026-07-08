@@ -3,7 +3,6 @@
 #0.5 0.1 0.1
 
 #########################
-#0.6 0.3 0.2
 #0.2 0.4 0.15
 
 #########################
@@ -14,10 +13,17 @@
 #[0.2, 0.4, 0.1] com gráfico de autovalores
 #[0.7, 0.25, 0.1] com gráfico de autovalores
 #0.76 0.1 0.1
-#0.55 0.3 0.2
 
-#POnto teste:
-0.2 0.6 0.3
+#Não há quebra
+#0.55 0.3 0.2
+0.5 0.3 0.2
+
+
+#Ponto teste:
+#0.2 0.6 0.5
+
+#Ponto teste
+#0.1 0.3 0.2
 
 #Ponto que gera um gráfico com bico para alpha = 0
 #0.449 0.5078 0.375 

@@ -13,7 +13,7 @@ import includes.Numericals_methods as nm
 from includes.Inicia import baricentrica
 from includes.Functions import fw, lbdas, lbdaf 
 from includes.Auxiliar_Functions import transparencia, if_PointInEq, if_PointInRet, colorPoint, hugoniotSystemSolver
-from includes.Campo_Hugoniot import Hug3
+from includes.Campo_Hugoniot import Hug3, F, G
 
 import numpy as np
 
@@ -92,9 +92,6 @@ def Branches_point(alpha, Point : list, integ_config : list):
     array_mh = nm.Euler_method(alpha, Point, [-integ_config[0], integ_config[1]])   #Array com h < 0
 
     #Retirando o ponto inicial (Point):
-    #array_ph = array_ph[~np.all(array_ph == Point, axis = 1)]
-    #array_mh = array_mh[~np.all(array_mh == Point, axis = 1)]
-
     array_ph = array_ph[1:]
     array_mh = array_mh[1:]
 
@@ -178,7 +175,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
                         bp = i
                         index_bp = j
             
-            if(index_bp != 0): #Verifica se o Point é o primeiro elemento da branch do Point
+            if(index_bp != 0): #Verifica se o Point eh o primeiro elemento da branch do Point
                 #Dividindo a primeira parte da branch do Point:
                 branch_atual = branches_list[bp]
 
@@ -430,7 +427,6 @@ def Branches_Hugoniot(
         alpha         : float, #Variavel de controle
         fixed_point   : list,  #Ponto fixo
         inteConfig    : list,  #Condiguracao da integracao
-        dz            : float, #A distancia entre dois planos
         TOL = 1e-3             #Tolerancia
 ) -> list:
     """
@@ -460,7 +456,7 @@ def Branches_Hugoniot(
 
     #Defini-se uma variavel para armazenar os pontos iniciais de integracao
     bestPoint1 = None
-    bestPoint2 = None #Isso supondo que há duas raizes no plano z = 0
+    bestPoint2 = None #Isso supondo que ha duas raizes no plano z = 0
 
     #Plano z = constante
     """
@@ -514,7 +510,6 @@ def Branches_Hugoniot(
         print("Nenhum candidato encontrado.")
         return []
 
-
     #--------------------------------------------------------
     #| Calculo do segundo conjunto de pontos para integracao|
     #-------------------------------------------------------
@@ -527,23 +522,37 @@ def Branches_Hugoniot(
                    outros pontos-solucao do sistema e integrar a partir do plano z = 0.0.
     """
     
-    #Plano de busca: z = 0.85 (ou 0.95 se z0 estiver próximo)
-    z_const = 0.95 if (abs(z0 - 0.5) < TOL) else 0.5
+    #Busca binaria para encontrar z_const com 2 candidatas (ou confirmar que ha apenas 1 ramo)
+    z_low   = z0
+    z_high  = 1.0
+    z_const = z_high
 
+    MAX_ITER = 10  #Limite de iteracoes da busca binaria
     cand = []
-    if(abs(z0 - 1.0) > TOL):
+
+    for _ in range(MAX_ITER):
+        if(abs(z_const - z0) <= TOL):
+            break
+
         _, _, _, _, cand = hugoniotSystemSolver(
                                 initialValue, finalValue, Resol, enableMask,
                                 u0, v0, z0,
                                 z_const, alpha
                                 )
 
+        if(len(cand) > 1):
+            break  #Encontrou 2 candidatas -> define z_const
+
+        #Apenas 1 (ou nenhuma) candidata -> tenta subir z_const
+        z_const = (z_low + z_high)/2.0
+        z_high = z_const
+
     #Selecao dos pontos em z = z_const
     bestPoint3 = None
     bestPoint4 = None
 
     if(len(cand) > 0):
-        #Primeiro ponto: mais proximo do fixed_point
+        #Primeiro ponto: mais proximo do fixed_point (Essa eh a estrategia atual)
         bestPoint3 = min(
             cand,
             key=lambda c: np.linalg.norm([c[0] - u0,
@@ -568,38 +577,61 @@ def Branches_Hugoniot(
                                               c[2] - bestPoint3[2]])
             )
         else:
-            print("Nenhum segundo ponto válido em z = z_const.")
+            print("Nenhum segundo conjunto de pontos válidos em z = z_const.")
 
-    
-
-    #----------------------------------------------------------
-    #Integracao a partir dos pontos determinados anteriormente|
-    #---------------------------------------------------------
+    #--------------------------------
+    #Integracao dos ramos inferiores|
+    #-------------------------------
 
     """
     [Explicacao] - Buscando uma solucao geral, pensei em integrar a partir dos pontos determinados anteriormen-
                    te ateh um valor proximo ao plano z = z0, quando o ponto estiver proximo ao plano z = z0, 
                    quebro a integracao.
                    Definido um outro plano z = z1 entre o plano z = z0 e z = 1 (calculado via "busca binaria) e
-                   calculo o proximo ponto-solucao (vao surgir alguns, entao devo escolher de forma precisa um
+                   calculado o proximo ponto-solucao (vao surgir alguns, entao devo escolher de forma precisa um
                    deles) e, com este ponto, inicio uma nova integracao em duas direcoes (analogo ao procedi-
                    mento anterior envolvendo o outro campo).
-
-                 - Separandos os pontos em pacotes (que eh possivel fazer a partir das quebras do fluxo de in-
-                   tegracao), terei as Branches de forma facil e, alem disso, os pontos ja estarao ordenados
-                   (por conta do comportamento do algoritmo).
     """
 
-    #Definindo a variavel Branch
+    #Definindo a variavel que armazenarah todas as Branches
     branches = []
 
     #Definindo a variavel arr para armazenar o array atual
     arr = []
 
     """
-    [Explicacao] - O trecho abaixo define um ou dois ramos iniciais a partir dos pontos encontrados
+    [Explicacao] - O trecho abaixo define um ou dois ramos inferiores a partir dos pontos encontrados
                    anteriormente.
+
+    [Refinamento] - No lugar de dar um "append" na variavel branches de forma aleatoria, vamos esco-
+                    da seguinte forma (supondo que ha dois pontos-solucao):
+                    -> Se os sentidos da terceira componente do campo nos pontos forem diferentes, 
+                       a prioridade eh o sentido positivo. Ou seja, se Hug3 > 0 em um dos pontos, es-
+                       te serah o primeiro ponto a ser integrado e dado "append" na variavel branches.
+                    -> Se os sentidos da terceira componente do campo nos pontos forem iguais, escolhe
+                       o primeiro ponto.
+                    Resumindo: Eh selecionado o primeiro ponto para integracao aquele que apresenta
+                    Hug3 > 0. 
+                    Note que, desta forma, eh "soh integrar", uma vez que, ao realizar o "append", os
+                    array jah estarao organizados.
     """
+
+    #Organizacao dos pontos
+    """
+    [Explicacao] - Note que a troca soh serah necessaria se, e somente se, o sentido em bestPoint1 for
+                   negativo e em bestPoint2 for positivo.
+                   -> Se Hug3 > 0 em bestPoint1 e Hug3 > 0 em bestPoint2 => Pontos organizados
+                   -> Se Hug3 > 0 em bestPoint1 e Hug3 < 0 em bestPoint2 => Pontos organizados
+                   -> Se Hug3 < 0 em bestPoint1 e Hug3 > 0 em bestPoint2 => Pontos desorganizados => Troca
+                   -> Se Hug3 < 0 em bestPoint1 e Hug3 < 0 em bestPoint2 => Impossivel (tem que ver na teoria)
+    """
+    if(len(list(filter(None, [bestPoint1, bestPoint2]))) > 1):
+        if(Hug3(alpha, u0, v0, z0, bestPoint1[0], bestPoint1[1], bestPoint1[2]) < 0 and
+           Hug3(alpha, u0, v0, z0, bestPoint2[0], bestPoint2[1], bestPoint2[2]) > 0):
+            temp = bestPoint1
+            bestPoint1 = bestPoint2
+            bestPoint2 = temp
+
     for bestPoint in filter(None, [bestPoint1, bestPoint2]):
         #Define o sentido da integracao:
         """
@@ -619,6 +651,18 @@ def Branches_Hugoniot(
         #Armazeno os pontos
         branches.append(arr)
 
+    """
+    [Observacao] - Agora a variavel branches estah fa seguinte forma:
+
+                    [[Ramo inicial], [Ramo final]]
+
+                   Ao realizar a proxima integracao, deveremos por os ramos entre os ramos inicial e fi-
+                   nal de tal forma que os pontos fiquem ordenados. 
+    """
+
+    #--------------------------------
+    #Integracao dos ramos superiores|
+    #-------------------------------
 
     """
     [Explicacao] - O trecho abaixo define um ou dois ramos a partir dos pontos calculados
@@ -626,25 +670,201 @@ def Branches_Hugoniot(
                  - Claro, possa ser que nao haja esses ramos, pois, em um caso limite, z0
                    eh justamente 1.0, logo, integrando a partir de z = 0.0, teria a curva
                    integral inteira.
+                   
+    [Refinamento] - A ordem de integracao vai se dar da seguinte forma:
+                    -> Primeiro: Identifico o bestpoint que estah mais proximo do ultimo 
+                       ponto do ramo inicial. Integro com h > 0 e h < 0 a partir deste 
+                       ponto, organizo em relacao ao valor de z dos pontos gerados. Com
+                       os pontos organizados, realizo o append em 'branches' entre o Ramo
+                       inicial e final.
+                    -> Segundo: O segundo ponto (caso exista) estarah proximo do ultimo 
+                       ponto do Ramo final (questao de continuidade), integro com h > 0 e 
+                       h < 0 e o ordeno (de forma analoga ao primeiro ponto). Porem ha um
+                       detalhe: a integracao dos dois pontos podem gerar a mesma curva, 
+                       portanto, deve-se "matar" os pontos duplicados. Com estes pontos, 
+                       realizo o append em "branches" entre o ramo da etapa anterior. 
     """
+    #Ramos a partir de z = z_const (bestPoint3 e bestPoint4)
+    upper_points = [bestPoint3, bestPoint4]
 
+    #Realiza a troca entre os bestpoints se necessário
+    valid_upper = list(filter(None, upper_points))
+    if len(valid_upper) > 1:
+        last = branches[0][-1]  #Ultimo ponto do ramo inicial
 
-    #Ramos a partir de z = z_const (bestPoint3 e, se necessario, bestPoint4)
-    #bestPoint4 so eh integrado se nao houver solucao dupla em z = zinit
-    pontos_superiores = [bestPoint3]
-    if(bestPoint2 is not None):
-        pontos_superiores.append(bestPoint4)
+        diff3 = np.array([last[0] - bestPoint3[0], last[1] - bestPoint3[1], last[2] - bestPoint3[2]])
+        diff4 = np.array([last[0] - bestPoint4[0], last[1] - bestPoint4[1], last[2] - bestPoint4[2]])
 
-    for bestPoint in filter(None, pontos_superiores):
-        sense = 1 if (Hug3(alpha, u0, v0, z0, bestPoint[0], bestPoint[1], bestPoint[2]) > 0) else 0
+        #Se bestPoint4 estiver mais proximo do último ponto do ramo inicial -> troca
+        if np.linalg.norm(diff3) > np.linalg.norm(diff4):
+            bestPoint3, bestPoint4 = bestPoint4, bestPoint3
+            upper_points = [bestPoint3, bestPoint4]
+
+    #-----------------------------------------------------------------------
+    #Referencia para checagem de duplicatas: ultimo ponto do ramo acumulado|
+    #----------------------------------------------------------------------
+    insert_idx = len(branches) - 1  #Posicao antes do Ramo final
+
+    for idx, bestPoint in enumerate(filter(None, upper_points)):
 
         arr_pos = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [ h, N])
         arr_neg = nm.HugonioutEuler_method(alpha, fixed_point, bestPoint, [-h, N])
 
-        branches.append(arr_pos)
-        branches.append(arr_neg)
+        arr_pos = arr_pos[1:]
+        arr_neg = arr_neg[1:]
+
+        col_pos = arr_pos[:, 2]
+        col_neg = arr_neg[:, 2]
+
+        i = 0
+        while(True):
+            dz = col_pos[0] - col_neg[i]
+
+            if(dz > 0):
+                if np.linalg.norm(arr_neg[-1] - bestPoint) > np.linalg.norm(arr_neg[0] - bestPoint):
+                    arr_neg = np.flip(arr_neg, axis=0)
+                org_points = np.concatenate([arr_neg, np.array(bestPoint).reshape(1, -1), arr_pos])
+                break
+
+            elif(dz < 0):
+                if np.linalg.norm(arr_pos[-1] - bestPoint) > np.linalg.norm(arr_pos[0] - bestPoint):
+                    arr_pos = np.flip(arr_pos, axis=0)
+                org_points = np.concatenate([arr_pos, np.array(bestPoint).reshape(1, -1), arr_neg])
+                break
+
+            else:
+                i += 1
+
+            if(i == len(col_neg)):
+                print("[ERROR] - Impossibilidade de determinar ordem")
+                exit()
+
+        #Remocoo de "duplicatas": compara contra o org_points do bestPoint anterior
+        TOL_dup = max(TOL, abs(h) * 2)  # Tolerancia especifica para deduplicacao
+
+        if idx > 0:
+            prev_branch = branches[insert_idx - 1]
+
+            mask = np.ones(len(org_points), dtype=bool)
+            for j, pt in enumerate(org_points):
+                if np.any(np.linalg.norm(prev_branch - pt, axis=1) <= TOL_dup):
+                    mask[j] = False
+
+            org_points = org_points[mask]
+
+        if(len(org_points) == 0):
+            continue #Pula, nao ha nada a inserir (curva totalmente duplicada)
+
+        #Insere antes do Ramo final
+        if(len(branches) < 2):
+            #Nao ha ramo final definido (No caso, ramo inicial = ramo final), "appenda" diretamente
+            branches.append(org_points)
+        else:
+            branches.insert(insert_idx, org_points)
+        insert_idx += 1  #Proximo insert empurra mais um
+
+    #[Guard] Mata as branches vazias antes de prosseguir
+    branches = [b for b in branches if len(b) > 0]
 
     #---------------------------------------------
     #|Filtro os pontos que estao dentro do Prisma|
     #---------------------------------------------
+    
+    for i in range(len(branches)):                                  #Varre todas as branches
+        mask = np.ones(len(branches[i]), dtype=bool)                #Reinicializa para cada branch
+        for j, pt in enumerate(branches[i]):                        #Varre a i-esima branch
+            if((not pointInP(pt)) or                                #Verifica se nao esta no prisma
+               ((abs(F(u0, v0, z0, pt[0], pt[1], pt[2])) > TOL) and
+               (abs(G(alpha, u0, v0, z0, pt[0], pt[1], pt[2])) > TOL))):                     
+                mask[j] = False                                     #"Mata" o j-esimo ponto do i-esimo branch
+
+        branches[i] = branches[i][mask]
+
+    #[Guard] Mata as branches vazias antes de prosseguir
+    branches = [b for b in branches if len(b) > 0]
+
+    #------------------------------------------------------------------------------
+    #|Qubra de Branches onde pontos consecutivos que estao distantes (ateh demais)|
+    #-----------------------------------------------------------------------------
+
+    #Define-se uma distancia maxima entre os pontos consecutivos
+    DIST_MAX = abs(h) * 5
+    new_branches = []   #Update das branches
+
+
+    """
+    [Explicacao] - Este algorismo funciona da seguinte forma:
+                   -> 'Identifica' a i-esima branch e armazena;
+                   -> Branch_temp eh iniciada com o primeiro ponto da i-esima branch
+                   -> Varre a i-esima branch em busca de dois pontos que estao suficientemente distantes.
+                      Enquanto nao encontra, a branch_temp acumula os pontos e, ao encontrar o j-esimo
+                      ponto que esta distante do seu sucessor, new_branches armazena os pontos acumulados
+                      pela branch_temp e reinicia branch_temp com o sucessor do j-esimo ponto.
+    """
+    for i in range(len(branches)):
+        branch_atual = list(branches[i])          #Trabalha como lista de pontos
+        branch_temp  = [branch_atual[0]]          #Inicia com o primeiro ponto da i-esima branch
+
+        """
+        [Explicacao] - Este trecho de codigo, como foi dito anteriormente, varre a i-esima branch em busca
+                       de dois pontos que estao suficientemente distantes e, sabendo a sua localizacao na 
+                       branch, ha a quebra da branch.
+        """
+        for j in range(len(branch_atual) - 1):
+            dist = np.linalg.norm(np.array(branch_atual[j+1]) - np.array(branch_atual[j]))
+
+            if((dist > DIST_MAX)):
+                #Quebra: salva o trecho atual e inicia um novo
+                new_branches.append(np.array(branch_temp))  #Armazena os pontos que foram acumulados
+                branch_temp = [branch_atual[j+1]]           #Reinicia com o sucessor j-esimo ponto que demarca a quebra
+            else:
+                branch_temp.append(branch_atual[j+1]) #Acumula o ponto na variavel
+
+        if(len(branch_temp) > 0): #Se branch_temp nao for nulo, i.e, se houver pontos "sobrando", appenda em new_branches
+            new_branches.append(np.array(branch_temp))
+
+    #Atualizacao das branches
+    branches = new_branches
+    
+    #--------------------------------------------------------------------------------------------------------
+    #|Qubra de Branches onde pontos estao localizados em um maximo local (com concavidade virada para baixo)|
+    #-------------------------------------------------------------------------------------------------------
+    """
+    [Explicacao] - De acordo com a teoria, no ponto de maximo local (onde a concavidade esta virada para baixo)
+                   ha a troca dos valores dos autovalores, i.e, ocorre 
+
+    [Refinamento] - Como a quebra da i-esima branch gera duas novas branches, ocorre o aumento no len de branches.
+                    Para contornar isto o for deve percorrer branch a branch.
+    """
+    #Variavel para novas branches
+    new_branches = [] #Para reaproveitar variavel
+
+    for branch_atual in branches:
+        if len(branch_atual) == 0:
+            continue  #Pula branches vazias
+
+        max_index = np.argmax(branch_atual[:, 2]) #Localiza o ponto com o maior z na branch
+        """
+        [Temporário] - teste de lambdas
+        """
+        print("######################################")
+        print(f"Coordenadas do ponto maximo: {branch_atual[max_index][0], branch_atual[max_index][1], branch_atual[max_index][2]}")
+        print(colorPoint(alpha, branch_atual[max_index]))
+        print(f"Valores dos lambdas: {lbdas(*branch_atual[max_index]), lambdz(*branch_atual[max_index], alpha), lbdaf(*branch_atual[max_index])}")
+
+        
+        #Verifica-se se este ponto nao eh o ultimo na branch e se ele nao esta muito proximo do plano z = 1.0 
+        if((not np.isclose(branch_atual[-1], branch_atual[max_index]).all()) and (abs(branch_atual[max_index][2] - 1.0) > TOL)):
+            #Quebra da branch no index do ponto maximo
+            branch1 = branch_atual[:max_index + 1]
+            branch2 = branch_atual[max_index:]
+
+            new_branches.append(branch1)
+            new_branches.append(branch2)
+        else:
+            #Appenda o branch inteiro, sem realizar a quebra
+            new_branches.append(branch_atual)
+    
+    branches = new_branches
+
     return branches

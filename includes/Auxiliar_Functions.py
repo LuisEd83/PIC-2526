@@ -41,7 +41,8 @@ def az(z): #Da/dz
     return 1/(1+z**2)
 """
 
-
+"""
+"""
 #Funcao sigmoide
 #Supondo k pequeno:
 k = 0.01
@@ -241,13 +242,13 @@ def hugoniotSystemSolver(
                         z0: float,            #Componente z do ponto fixo
                         z: float,             #Plano z constante
                         alpha: float,         #Variavel de controle
-                        TOL = 1e-3,           #Tolerancia
+                        TOL = 1e-4,           #Tolerancia
                         TOL_residual = 1e-8   #Tolerancia 
                         ) -> list:
     
     """
     [Explicacao] - Dependencias para o codigo funcionar sem aparecer
-         o problema de "chamada circular"
+                   o problema de "chamada circular"
     """
     import includes.Campo_Hugoniot as ch
     
