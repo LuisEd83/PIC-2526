@@ -9,20 +9,20 @@ import matplotlib
 #            Variaveis globais               #
 ##############################################
 #Define-se as variaveis                      #
-alpha = 0.5                                  #
-u0, v0, z0 = 0.5, 0.3, 0.2                   #
-z = 1.0                                     #
+alpha = 0.0                                  #
+u0, v0, z0 = 0.1, 0.6, 0.2                   #
+z = 0.0                                     #
 num_N = 10                                   #
 dz = 1/(num_N * 100)                         #
 #Variavel do grafico                         #
 iValue = 0.01                                #
 fValue = 0.99                                #
 eMask = True                                 #
-factor = 2                                   #
+factor = 4                                   #
 Resol = 500 * factor                         #
 #Variavel de tolerancia                      #
 TOL_residual = 1e-8                          #
-TOL = 1e-3                                   #
+TOL = 1e-4                                   #
 ##############################################
 
 matplotlib.use('TkAgg')  #backend mais fluido que o padrão
@@ -58,7 +58,8 @@ fig = plt.figure(figsize=(14,6))
 #___________SUBFIGURA 1___________#
 #Variavel da primeira sub figura
 ax1 = fig.add_subplot(121)
-
+for i in range(len(c)):
+    ax1.scatter(c[i][0], c[i][1], color = 'lightgreen', marker= 'o', zorder = 10)
 #######################################################################################################
 #Reta u + v = 1
 u_value = [1, 0]

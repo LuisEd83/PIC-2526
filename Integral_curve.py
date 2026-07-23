@@ -10,7 +10,7 @@ import includes.Auxiliar_Functions as af
 import includes.Functions as fun
 
 import LambdaZ_vec as lv
-import matplotlib.pyplot as plot
+import matplotlib.pyplot as plt
 
 #Possui as branches como parametro 
 #Eh utilizada no Points_prism.py
@@ -23,11 +23,57 @@ def plotIntegralCurve(ax, Point, alpha, branches, colors):
                 linestyle = '-')   #Tipo de linha (no caso sera a linha continua)
                 #zorder = 4)        #Ordem de prioridade
 
-    
     if(alpha != 0):
         lv.plotVecsLambdaZWB(ax, alpha, branches, 5) #Plotagem dos vetores
-    #ax.plot(Point[0], Point[1], Point[2], marker = '.', color = 'k', zorder = 5)
     ax.scatter(*Point, color='black', s=40, depthshade=False)
+
+def integralCurveProjections(Point, branches, colors):
+    fig1, ax_UZ = plt.subplots(figsize = (8,5)) 
+    fig2, ax_VZ = plt.subplots(figsize = (8,5))
+    fig3, ax_UV = plt.subplots(figsize = (8,5))
+    
+    for i in range(len(branches)):
+        #Projecao U x Z
+        ax_UZ.plot(branches[i][:, 0],
+                   branches[i][:, 2],
+                   color = colors[i][0],
+                   linestyle = '-')
+        ax_UZ.scatter(Point[0], Point[2], color = 'black', s = 10)
+        
+        #Projecao V x Z 
+        ax_VZ.plot(branches[i][:, 1],
+                   branches[i][:, 2],
+                   color = colors[i][0],
+                   linestyle = '-')
+        ax_VZ.scatter(Point[1], Point[2], color = 'black', s = 10)
+
+        #Projecao U x V
+        ax_UV.plot(branches[i][:, 0],
+                   branches[i][:, 1],
+                   color = colors[i][0],
+                   linestyle = '-')
+        ax_UV.scatter(Point[0], Point[1], color = 'black', s = 10)
+
+    ax_UZ.set_xlabel("u")
+    ax_UZ.set_ylabel("z")
+    ax_UZ.set_title("Projection u vs z")
+    ax_UZ.set_xlim(0,1)
+    ax_UZ.set_ylim(0,1)
+    ax_UZ.grid(True)
+
+    ax_VZ.set_xlabel("v")
+    ax_VZ.set_ylabel("z")
+    ax_VZ.set_title("Projection v vs z")
+    ax_VZ.set_xlim(0,1)
+    ax_VZ.set_ylim(0,1)
+    ax_VZ.grid(True)
+
+    ax_UV.set_xlabel("u")
+    ax_UV.set_ylabel("v")
+    ax_UV.set_title("Projection u vs v")
+    ax_UV.set_xlim(0,1)
+    ax_UV.set_ylim(0,1)
+    ax_UV.grid(True)
 
 #Nao possui as branches como parametro (Calculo interno)
 def integralCurve(alpha, configCurve):
@@ -45,6 +91,9 @@ def integralCurve(alpha, configCurve):
     #Inicializando figura
     ax = ini.ambiente3d()
     ax.view_init(elev=30., azim=-130.) #Initial Camera Position
+
+    fig1, ax_UZ = plt.subplots(figsize = (8,5)) 
+    fig2, ax_VZ = plt.subplots(figsize = (8,5))
 
     if(af.transparencia()):
         #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
@@ -87,8 +136,6 @@ def integralCurve(alpha, configCurve):
         colors = b.Branches_point_colors(alpha, branches) #Cores das branches
 
         plotIntegralCurve(ax, Point, alpha, branches, colors)
+        integralCurveProjections(Point, branches, colors)
 
-    plot.show()
-
-#integralCurve(0.1, [0.01, 500])
-#integralCurve(0.01, [0.6, 0.3, 0.2], [0.01, 500])
+    plt.show()

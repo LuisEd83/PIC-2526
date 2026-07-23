@@ -15,13 +15,13 @@ factor = 2                                   #
 Resol = 500 * factor                         #
 
 #Para curva
-alpha = 0.1
-fixed_point = [0.5, 0.3, 0.2]
+alpha = 0.0
+fixed_point = [0.425, 0.5235, 0.2 ]
 #0.1 0.3 0.2
 
 #######################################################
 #Para as funções feitas à mão
-h, N = 0.01, 500
+h, N = 0.001, 1000
 integ_config = [h, N]
 #######################################################
 
@@ -33,6 +33,7 @@ zmin, zmax = ini.concentrations()
 
 ax = ini.ambiente3d()
 ax.view_init(elev=30., azim=-130.) #Initial Camera Position
+fig, (ax_uz, ax_vz) = plt.subplots(1, 2, figsize=(12, 5)) #Para as projecoes
 
 if(af.transparencia()):
     #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
@@ -70,8 +71,12 @@ if(af.transparencia()):
 
 branches = b.Branches_Hugoniot(iValue, fValue, Resol, eMask, alpha, fixed_point, integ_config)
 
-#Plot do ponto fixo
+#Plot do ponto fixo no ambiente 3D
 ax.plot(fixed_point[0], fixed_point[1], fixed_point[2], marker='o', color='blue')
+
+#Plot do Ponto fixo nas projeções
+ax_uz.plot(fixed_point[0], fixed_point[2], marker='o', color='blue')
+ax_vz.plot(fixed_point[1], fixed_point[2], marker='o', color='blue')
 
 print("**********************************************************")
 print("Valor das funções F e G no ponto fixo:")
@@ -98,4 +103,39 @@ for i, branch in enumerate(branches):
         markersize=2
     )
 
+    #Projecao u-z (coluna 0 vs coluna 2)
+    ax_uz.plot(
+        branch[:, 0],
+        branch[:, 2],
+        marker='o',
+        linestyle='-',
+        markersize=2
+    )
+
+    #Projecao v-z (coluna 1 vs coluna 2)
+    ax_vz.plot(
+        branch[:, 1],
+        branch[:, 2],
+        marker='o',
+        linestyle='-',
+        markersize=2
+    )
+
+#Projecao u vs z
+ax_uz.set_xlabel("u")
+ax_uz.set_ylabel("z")
+ax_uz.set_title("Projection u vs z")
+ax_uz.set_xlim(0, 1)
+ax_uz.set_ylim(0, 1)
+ax_uz.grid(True)
+
+#Projecao v vs z
+ax_vz.set_xlabel("v")
+ax_vz.set_ylabel("z")
+ax_vz.set_title("Projection v vs z")
+ax_vz.set_xlim(0, 1)
+ax_vz.set_ylim(0, 1)
+ax_vz.grid(True)
+
+plt.tight_layout()
 plt.show()

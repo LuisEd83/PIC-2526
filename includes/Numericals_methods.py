@@ -231,7 +231,7 @@ def runge_Kutta_Scipy(
 
     return Points
 
-def HugonioutEuler_method(alpha, fixed_point : list, P_chute : list, integ_config : list, TOL = 5e-2):
+def HugonioutEuler_method(alpha, fixed_point : list, P_chute : list, integ_config : list, TOL = 5e-3):
     #Extraindo ponto fixado
     u0, v0, z0 = fixed_point 
 
@@ -259,6 +259,9 @@ def HugonioutEuler_method(alpha, fixed_point : list, P_chute : list, integ_confi
 
         if((abs(zkp1 - z0) <= TOL)):
             break
+
+        # if(ch.Norma(alpha, u0, v0, z0, ukp1, vkp1, zkp1) < TOL):
+        #     break
 
         #Armazenando os valores na lista de pontos
         Points.append([ukp1, vkp1, zkp1])

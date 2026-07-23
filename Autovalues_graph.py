@@ -155,5 +155,5 @@ def lamb_graph(alpha, integ_config : list):
         lambGraphPlot(ax, Point, alpha, segments, k, dist)
     
     #Plotando todas as figuras de uma so vez
-    plot.show()
+    #plot.show()
 

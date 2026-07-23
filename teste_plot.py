@@ -12,8 +12,8 @@ import includes.Campo_Hugoniot as ch
 # Flags de plotagem — habilite/desabilite conforme necessario
 # -------------------------------------------------------
 
-PLOT_SURFACES = False   # Subplot com F=0, G=0 e intersecao
-PLOT_INTERSEC = True   # Subplot apenas com os pontos de intersecao
+PLOT_SURFACES = True   # Subplot com F=0, G=0 e intersecao
+PLOT_INTERSEC = False   # Subplot apenas com os pontos de intersecao
 
 # -------------------------------------------------------
 # Parametros
@@ -27,13 +27,13 @@ fixed_point = [u0, v0, z0]
 # Grade de avaliacao
 # -------------------------------------------------------
 
-N        = 575     # Resolucao por eixo
+N        = 550     # Resolucao por eixo
 lim      = 0.8    # Raio da janela ao redor do ponto fixo
 TOL_surf = 7e-5   # Tolerancia para coleta dos pontos de intersecao
 
 uArr = np.linspace(0.0, 1.1, N)
 vArr = np.linspace(0.0, 1.1, N)
-zArr = np.linspace(0.0, 1.1, N)
+zArr = np.linspace(z0 + 0.05, 1.1, N)
 
 U, V, Z = np.meshgrid(uArr, vArr, zArr, indexing='ij')
 
@@ -132,6 +132,7 @@ def style_ax(ax):
     ax.yaxis.pane.set_edgecolor('#333355')
     ax.zaxis.pane.set_edgecolor('#333355')
     ax.grid(True, color='#333355', linewidth=0.4)
+    ax.view_init(elev=45., azim=-160.)
 
 # -------------------------------------------------------
 # Subplot 1: superficies F=0 e G=0 + intersecao
@@ -142,13 +143,13 @@ if PLOT_SURFACES:
     style_ax(ax1)
 
     if len(faces_F) > 0:
-        mesh_F = Poly3DCollection(verts_F[faces_F], alpha=0.20)
+        mesh_F = Poly3DCollection(verts_F[faces_F], alpha=0.5)
         mesh_F.set_facecolor('#4a90d9')
         mesh_F.set_edgecolor('none')
         ax1.add_collection3d(mesh_F)
 
     if len(faces_G) > 0:
-        mesh_G = Poly3DCollection(verts_G[faces_G], alpha=0.15)
+        mesh_G = Poly3DCollection(verts_G[faces_G], alpha=0.5)
         mesh_G.set_facecolor('#e07b54')
         mesh_G.set_edgecolor('none')
         ax1.add_collection3d(mesh_G)
@@ -162,8 +163,8 @@ if PLOT_SURFACES:
     ax1.scatter(*fixed_point, color='white', s=50, zorder=5)
 
     ax1.legend(handles=[
-        Patch(facecolor='#4a90d9', alpha=0.5, label='F(u,v,z) = 0'),
-        Patch(facecolor='#e07b54', alpha=0.5, label='G(u,v,z) = 0'),
+        Patch(facecolor='#4a90d9', alpha=0.9, label='F(u,v,z) = 0'),
+        Patch(facecolor='#e07b54', alpha=0.9, label='G(u,v,z) = 0'),
         Line2D([0], [0], marker='o', color='w', markerfacecolor='lime',
                markersize=5, label='F=0 ∩ G=0', linestyle='None'),
     ], loc='upper left', facecolor='#0d0d1a', edgecolor='#333355',

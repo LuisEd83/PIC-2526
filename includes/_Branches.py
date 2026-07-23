@@ -226,7 +226,7 @@ def Branches_point(alpha, Point : list, integ_config : list):
             """
 
     else:
-        #Criando a variaveis chamar funcao:
+        #Criando a variaveis para chamar funcao:
         points_indexs = []                                              #Armazenamento de indices
         color_value = lambd_comp(org_points[0], alpha)                  #Variavel inteira para controle
         size_array = len(org_points)                                    #Variavel para armazenar tamanho do array dos pontos organizados
@@ -439,6 +439,7 @@ def Branches_Hugoniot(
 
     Possivel adicao futura: Um metodo para correcao da curva (provavelmente Newton-Rapshon)
     """
+    import includes.Campo_Hugoniot as ch
 
     #-------------------------------------------------------------
     #| Extracao de variaveis convenientes para melhor explicacao |
@@ -641,6 +642,10 @@ def Branches_Hugoniot(
                        maior que 0, caso contrario atribui 0
         """
         sense = 1 if (Hug3(alpha, u0, v0, z0, bestPoint[0], bestPoint[1], bestPoint[2]) > 0) else 0
+
+        print(f"F = {ch.F(u0, v0, z0, bestPoint[0], bestPoint[1], bestPoint[2])}")
+        print(f"G = {ch.G(alpha, u0, v0, z0, bestPoint[0], bestPoint[1], bestPoint[2])}")
+        print("----------------------------------------------------------------------------")
 
         #Com o sentido, faz-se a integracao
         if(sense):

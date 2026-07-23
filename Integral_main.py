@@ -14,6 +14,8 @@ import includes.Auxiliar_Functions as af
 import Autovalues_graph as ag
 import Coincidence_surfaces as cs
 import Integral_curve as ic
+import includes.Campo_Hugoniot_Teste as cht
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,6 +30,7 @@ Num_z = 20      #Numero de curvas de nivel
 def main():
     #Importando biblioteca para nao haver erro durante a lida do arquivo Functions.py
     import includes.Inicia as ini
+    global h
 
     #__________IICIALIZANDO AMBIENTE 3D__________#
 
@@ -85,16 +88,55 @@ def main():
 
         #__________INICIALIZANDO PLOTAGEM DA CURVA INTEGRAL__________#
         ic.plotIntegralCurve(ax, Point, alpha, branches, colors)
-        
+
+        #__________INICIALIZANDO PLOTAGEM DAS PROJECOES__________#
+        #ic.integralCurveProjections(Point, branches, colors)
+
+    print(f"h antes: {h}")
+    arrayPos = cht.HugonioutEuler_method(alpha, *iniPoints, [h, N])
+    print(f"h após positivo: {h}")
+    h = -h
+    arrayNeg = cht.HugonioutEuler_method(alpha, *iniPoints, [h, N])
+    print(f"h após negativo: {h}")
+
+    # 1. Extrai apenas a parte [u, v, z] de cada elemento da lista de pontos
+    PointsPos = np.array([item[0] for item in arrayPos])
+    PointsNeg = np.array([item[0] for item in arrayNeg])
+
+    arrayNeg = arrayNeg[1:]
+    arrayPos = arrayPos[1:]
+
+    sigP = np.array([item[1] for item in arrayPos])
+    sigN = np.array([item[1] for item in arrayNeg])
+    sigN = sigN[1:]
+    sigP = sigP[1:]
+
+    # 3. Agora a concatenação vai funcionar perfeitamente, pois ambos são matrizes Nx3 puras
+    points = np.concatenate((PointsNeg, PointsPos))
+    sig = np.concatenate((sigN, sigP))
+
+    print(f"tamanho: {points.size}")
+    print(f"tamanho: {sig.size}")
+
+
+
+    for i in range(1000):
+        ax.scatter(points[i][0], points[i][1], sig[i], color='red', marker='.', zorder = 10)
+
+    #[[u, v, z], sigma]
+    #ax.scatter(arrayPos[-1][0][0], arrayPos[-1][0][1], arrayPos[-1][0][2], color='blue', marker='.', zorder = 10)
+    print(arrayPos[0])
+
+    
     #__________INICIALIZANDO PLOTAGEM DE GRAFICO DAS VELOCIDADES__________#
-    ag.lamb_graph(alpha, [h, N])
+    #ag.lamb_graph(alpha, [h, N])
     
     #__________INICIALIZANDO PLOTAGEM DA SUPERFICIE DE COINCIDENCIA__________#
     base = cs.argmin_branch(branches)
     auto_branches = b.Branches_auto([h, N], Num_z, alpha, base - 0.5, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
-    cs.plotCoicindenceCurves(ax, auto_branches, auto_colors)
+    #cs.plotCoicindenceCurves(ax, auto_branches, auto_colors)
 
     #Inicia plotagem
     plt.show()
