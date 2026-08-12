@@ -1,83 +1,48 @@
 import includes.Campo_Hugoniot_Teste as cht
 import includes.Inicia as ini
-import includes.Auxiliar_Functions as af
 import includes.Functions as fun
-
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
-h, N = 0.01, 500
+umin, umax, vmin, vmax, triang = ini.dominio()
+mp = 0
+
 alpha = 0.0
-fixedPoint = [0.5, 0.3, 0.2]
+u0 = 0.5
+v0 = 0.3
+z0 = 0.5
 
-arrayPos = cht.HugonioutEuler_method(alpha, fixedPoint, [h, N])
-arrayNeg = cht.HugonioutEuler_method(alpha, fixedPoint, [-h, N])
+branches, resultados = cht.HugoniotPlanaImplicita(alpha, u0, v0, z0, 1e-3)
 
-arrayNeg = arrayNeg[1:]
-arrayPos = arrayPos[1:]
+x = np.linspace(umin, umax, 500)
+y = np.linspace(vmin, vmax, 500)
+X, Y = np.meshgrid(x, y)
 
-# 1. Extrai apenas a parte [u, v, z] de cada elemento da lista de pontos
-PointsPos = np.array([item[0] for item in arrayPos])
-PointsNeg = np.array([item[0] for item in arrayNeg])
-print(PointsPos[-1])
-print(PointsNeg[-1])
+# === Plot dos ramos, cada um com uma cor diferente ===
+cores = cm.tab10.colors  # paleta com 10 cores distintas, cicla se houver mais ramos
 
+for idx, ramo in enumerate(branches):
+    ramo = np.array(ramo)
+    cor = cores[idx % len(cores)]
+    plt.plot(ramo[:, 0], ramo[:, 1], '-', color=cor, linewidth=1.5,
+              label=f'ramo {idx}')
 
-# 2. Se precisar dos sigmas isolados em algum lugar:
-# sigP = np.array([item[1] for item in arrayPos])
-# sigN = np.array([item[1] for item in arrayNeg])
+# === Plot dos pontos onde sig(u,v) = 0, por ramo ===
+for idx_ramo, raizes in resultados:
+    if len(raizes) == 0:
+        continue
+    raizes = np.array(raizes)
+    plt.plot(raizes[:, 0], raizes[:, 1], 'x', color='red', markersize=10,
+              markeredgewidth=2, zorder=5)
 
-# 3. Agora a concatenação vai funcionar perfeitamente, pois ambos são matrizes Nx3 puras
-points = np.concatenate((PointsPos, PointsNeg))
-print(points.size)
+# === Ponto fixo ===
+plt.plot(u0, v0, 'ko', markersize=8, label='ponto fixo')
 
-#mapeia para baricentrica ou não
-mp = ini.baricentrica()
-
-#Define as concentracoes minima e maxima
-zmin, zmax = ini.concentrations() 
-
-#Inicializando figura
-ax = ini.ambiente3d()
-ax.view_init(elev=30., azim=-130.) #Initial Camera Position
-
-if(af.transparencia()):
-    #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
-
-    #Vertices do triangulo
-    Gw, Go = 0, 0
-    Ww, Wo = 1, 0
-    Ow, Oo = 0, 1
-
-    # Mapeia para coordenadas baricentricas de mp = 1
-    G1, G2 = fun.map(Gw, Go, mp)
-    W1, W2 = fun.map(Ww, Wo, mp)
-    O1, O2 = fun.map(Ow, Oo, mp)
-
-    # Triangulo no plano cmin
-    ax.plot([G1,W1], [G2, W2], [zmin,zmin], 'k')
-    ax.plot([G1,O1], [G2, O2], [zmin,zmin], 'k')
-    ax.plot([W1,O1], [W2, O2], [zmin,zmin], 'k')
-
-    #Triangulo no plano c = cmax
-    ax.plot([G1,W1], [G2, W2], [zmax,zmax], 'k')
-    ax.plot([G1,O1], [G2, O2], [zmax,zmax], 'k')
-    ax.plot([W1,O1], [W2, O2], [zmax,zmax], 'k')
-
-    #Arestas verticais
-    ax.plot([G1,G1], [G2,G2], [zmin,zmax], 'k')
-    ax.plot([W1,W1], [W2,W2], [zmin,zmax], 'k')
-    ax.plot([O1,O1], [O2,O2], [zmin,zmax], 'k')
-
-    #Identificacao dos eixos
-    ax.set_xlabel('$u$')
-    ax.set_ylabel('$v$')
-    ax.set_zlabel('$z$')
-
-
-ax.plot(points[:, 0], points[:, 1], points[:, 2], color='black', linestyle='-')
-ax.scatter(fixedPoint[0], fixedPoint[1], fixedPoint[2], color = 'red', marker = 'o', s = 3)
-
+plt.xlabel('u')
+plt.ylabel('v')
+plt.title(f'Hugoniot Plana Implícita — z0={z0}, alpha={alpha}')
+plt.legend(fontsize=8, loc='best')
+plt.grid(True)
 plt.show()
-

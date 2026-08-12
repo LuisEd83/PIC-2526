@@ -12,10 +12,14 @@ import includes.Campo_Hugoniot as ch
 import includes.Functions as fun
 from includes.Inicia import baricentrica
 
-from numpy import array, ceil, abs, log10, sqrt, linspace
+from numpy import array, ceil, abs, log10, sqrt, linspace, exp
 
-def az(z): #Da/dz
-    return 1/(1+z**2)
+k = 0.01
+def a(z):
+    return 1/(1 + exp(-k*z)) - 0.5
+
+def az(z):
+    return k*a(z)*(1-a(z))
 
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))

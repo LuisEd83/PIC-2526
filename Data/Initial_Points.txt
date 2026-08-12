@@ -16,15 +16,17 @@
 
 #Não há quebra
 #0.55 0.3 0.2
-0.5 0.3 0.2
+
+#Ponto problemático para Hugoniot
+#0.5 0.3 0.2
 
 #0.22884644653473796 0.3738862039037327 0.37668469770975077
 
 #Ponto teste:
 #0.2 0.6 0.5
 
-#Ponto teste
-#0.1 0.3 0.2
+#Ponto teste (A curva de rarefacao apenas possui um ramo)
+0.1 0.6 0.2
 
 #Ponto que gera um gráfico com bico para alpha = 0
 #0.449 0.5078 0.375 

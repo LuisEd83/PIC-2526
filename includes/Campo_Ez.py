@@ -12,14 +12,18 @@ Com isto concluido, poderemos passar para proxima etapa: integrar as componentes
 
 import includes.Functions as fun
 
-from numpy import sqrt, cos
+from numpy import sqrt, exp
 
 #Redefinindo funcoes para nao haver erro circular
 #def az(z):
 #    return (cos(z))
 
+k = 0.01
+def a(z):
+    return 1/(1+exp(-k*z)) - 0.5
+
 def az(z):
-    return 1/(1+z**2)
+    return k*a(z)*(1-a(z))
 
 def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))

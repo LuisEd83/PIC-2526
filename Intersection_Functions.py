@@ -10,8 +10,8 @@ import matplotlib
 ##############################################
 #Define-se as variaveis                      #
 alpha = 0.0                                  #
-u0, v0, z0 = 0.1, 0.6, 0.2                   #
-z = 0.0                                     #
+u0, v0, z0 = 0.5, 0.3, 0.2                   #
+z = 0.6135964711799402                                     #
 num_N = 10                                   #
 dz = 1/(num_N * 100)                         #
 #Variavel do grafico                         #
@@ -87,6 +87,9 @@ ax1.plot([], [], color = 'blue', label=f'F(u, v, {z}) = 0')      #Legenda -> Cur
 ax1.plot([], [], color = 'red',  label=f'G(u, v, {z}) = 0')      #Legenda -> Curva da funcao G
 ax1.plot([], [], color = 'black', label = 'u + v = 1')           #Legenda -> Curva u + v = 1
 ax1.plot([], [], color = 'gray', marker = 'o', linestyle = '', label = 'Root region')
+
+u1, v1 = 0.25023633278438717, 0.6090915075750439
+ax1.plot(u1, v1, color = 'darkgreen', marker = 'x')
 
 #Configuracoes da primeira subfigure
 ax1.set_title(f'Level curve z = {z}')    #Titulo da figura

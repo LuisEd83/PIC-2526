@@ -273,6 +273,9 @@ def hugoniotSystemSolver(
                    e a malha UxV.
     """
 
+    if(abs(z - z0) < TOL):
+        return [], [], [], [], []
+
     #Grade de valores
     u_vals = np.linspace(initialValue, finalValue, Resol)   #Cria a reta u com 200 pontos
     v_vals = np.linspace(initialValue, finalValue, Resol)   #Cria a reta v com 200 pontos
@@ -334,3 +337,24 @@ def hugoniotSystemSolver(
     print("########################################################################")
 
     return [U, V, ZF, ZG, candidatas]
+
+
+def sigma(
+        u  : float,
+        v  : float,
+        z  : float,
+        u0 : float,
+        v0 : float,
+        z0 : float,
+        tol = 1e-2
+):
+    f = fun.fw(u, v, z)
+    g = fun.fo(u, v, z)
+
+    f0 = fun.fw(u0, v0, z0)
+    g0 = fun.fo(u0, v0, z0)
+
+    if(abs(u - u0) < tol):
+        return (g - g0)/(v - v0)
+
+    return (f - f0)/(u - u0)
