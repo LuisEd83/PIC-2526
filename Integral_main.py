@@ -89,18 +89,14 @@ def main():
         #__________INICIALIZANDO PLOTAGEM DA CURVA INTEGRAL__________#
         ic.plotIntegralCurve(ax, Point, alpha, branches, colors)
 
-        # branchesImplicita, colorsHugoniot, branchesHugoniot = b.Branches_Hugoniot(alpha, Point, [h, N], 0.0, 0.99, 500, True)
-
-        # hic.plotHugoniotCurve(ax, alpha, Point, branchesHugoniot, branchesImplicita, colorsHugoniot)
-
         #__________INICIALIZANDO PLOTAGEM DAS PROJECOES__________#
-        #ic.integralCurveProjections(Point, branches, colors)
+        ic.integralCurveProjections(Point, branches, colors)
     
     
     #__________INICIALIZANDO PLOTAGEM DA SUPERFICIE DE COINCIDENCIA__________#
-    # auto_colors, auto_branches = b.Branches_auto([h, N], Num_z, alpha, 0.05, altura = 1.0)
+    auto_colors, auto_branches = b.Branches_auto([h, N], Num_z, alpha, 0.05, altura = 1.0)
 
-    # cs.plotCoicindenceCurves(ax, auto_branches, auto_colors)
+    cs.plotCoicindenceCurves(ax, auto_branches, auto_colors)
 
     #Inicia plotagem
     plt.show()
