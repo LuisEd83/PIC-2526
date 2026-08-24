@@ -1,141 +1,205 @@
-import includes.Numericals_methods as nm
 import matplotlib.pyplot as plt
-import includes.Inicia as ini
 import includes.Auxiliar_Functions as af
 import includes.Functions as fun
-import includes.Campo_Hugoniot as ch
-import includes._Branches as b
-import numpy as np
+import includes.Inicia as ini
+import LambdaZ_vec as lv
 
-#Variavel do grafico                         #
-iValue = 0.01                                #
-fValue = 0.99                                #
-eMask = True                                 #
-factor = 2                                   #
-Resol = 500 * factor                         #
+import matplotlib.pyplot as plt
+from numpy import array
 
-#Para curva
-alpha = 0.0
-fixed_point = [0.1, 0.6, 0.2 ]
-#0.1 0.3 0.2
-
-#######################################################
-#Para as funções feitas à mão
-h, N = 0.001, 1000
-integ_config = [h, N]
-#######################################################
-
-#mapeia para baricentrica ou não
-mp = ini.baricentrica()
-
-#Define as concentracoes minima e maxima
-zmin, zmax = ini.concentrations() 
-
-ax = ini.ambiente3d()
-ax.view_init(elev=30., azim=-130.) #Initial Camera Position
-fig, (ax_uz, ax_vz) = plt.subplots(1, 2, figsize=(12, 5)) #Para as projecoes
-
-if(af.transparencia()):
-    #__________INICIALIZANDO PLOTAGEM DO PRISMA__________#
-    
+#Funcao que desenha um triangulo
+def triangulo(
+        ax,    #ax para plotagem
+        mp     #Baricentrica
+):
     #Vertices do triangulo
     Gw, Go = 0, 0
     Ww, Wo = 1, 0
     Ow, Oo = 0, 1
 
-    # Mapeia para coordenadas baricentricas de mp = 1
     G1, G2 = fun.map(Gw, Go, mp)
     W1, W2 = fun.map(Ww, Wo, mp)
     O1, O2 = fun.map(Ow, Oo, mp)
 
-    # Triangulo no plano cmin
-    ax.plot([G1,W1], [G2, W2], [zmin,zmin], 'k')
-    ax.plot([G1,O1], [G2, O2], [zmin,zmin], 'k')
-    ax.plot([W1,O1], [W2, O2], [zmin,zmin], 'k')
+    ##Ponto umbilico no plano cl
+    ## Precisa inicializar as viscosidades
+    #Uwl, Uol = muwl/(muwl + muo + mug), muwl/(muwl + muo + mug)
+    #Uwl, Uol = fun.map(Uwl, Uol, mp)
 
-    #Triangulo no plano c = cmax
-    ax.plot([G1,W1], [G2, W2], [zmax,zmax], 'k')
-    ax.plot([G1,O1], [G2, O2], [zmax,zmax], 'k')
-    ax.plot([W1,O1], [W2, O2], [zmax,zmax], 'k')
+    ####################################################
 
-    #Arestas verticais
-    ax.plot([G1,G1], [G2,G2], [zmin,zmax], 'k')
-    ax.plot([W1,W1], [W2,W2], [zmin,zmax], 'k')
-    ax.plot([O1,O1], [O2,O2], [zmin,zmax], 'k')
-
-    #Identificacao dos eixos
-    ax.set_xlabel('$u$')
-    ax.set_ylabel('$v$')
-    ax.set_zlabel('$z$')
+    #O triangulo
+    ax.plot([G1, W1], [G2, W2], 'k-') 
+    ax.plot([G1, O1], [G2, O2], 'k-') 
+    ax.plot([W1, O1], [W2, O2], 'k-') 
 
 
-branches = b.Branches_Hugoniot(iValue, fValue, Resol, eMask, alpha, fixed_point, integ_config)
+def plotHugoniotCurve(
+        ax,
+        alpha,
+        fixed_point,
+        branches            : list,
+        branchesImplicita,
+        colors
+):
+    from includes.Inicia import baricentrica
 
-#Plot do ponto fixo no ambiente 3D
-ax.plot(fixed_point[0], fixed_point[1], fixed_point[2], marker='o', color='blue')
+    #Mapeia para as coordenadas baricentricas se necessario
+    if(baricentrica()):
+        for branch in branches:
+            for p in branch:
+                u, v, z = p[0]
 
-#Plot do Ponto fixo nas projeções
-ax_uz.plot(fixed_point[0], fixed_point[2], marker='o', color='blue')
-ax_vz.plot(fixed_point[1], fixed_point[2], marker='o', color='blue')
+                u, v = fun.map(u, v, baricentrica())
 
-print("**********************************************************")
-print("Valor das funções F e G no ponto fixo:")
-print(f"Valor de F(fixed_P): {ch.F(fixed_point[0], fixed_point[1], fixed_point[2], fixed_point[0], fixed_point[1], fixed_point[2])};")
-print(f"Valor de G(fixed_P): {ch.G(alpha, fixed_point[0], fixed_point[1], fixed_point[2], fixed_point[0], fixed_point[1], fixed_point[2])}")
-print("**********************************************************")
+                p[0][0] = u
+                p[0][1] = v
 
-print(f"Tamanho das branches = {len(branches)}")
+        for branch in branchesImplicita:
+            for pointBranchImplicita in branch:
+                u, v = pointBranchImplicita
 
-for i, branch in enumerate(branches):
-    if len(branch) == 0:
-        continue
+                u, v = fun.map(u, v, baricentrica())
 
-    branch = np.array(branch)
+                pointBranchImplicita[0] = u
+                pointBranchImplicita[1] = v
 
-    print(f"[Branch {i}] {len(branch)} pontos")
+    """for i in range(1, len(branches)):
+        ponto_anterior = branches[i-1][-1]
+        branches[i].insert(0, ponto_anterior)"""
 
-    ax.plot(
-        branch[:, 0],
-        branch[:, 1],
-        branch[:, 2],
-        marker='o',
-        linestyle='-',
-        markersize=2
-    )
+    #Plotagem
+    for i, branch in enumerate(branches):
+        points = array([p[0] for p in branch])
+        ax.plot(points[:, 0],
+                points[:, 1],
+                points[:, 2],
+                color = colors[i],
+                linestyle = '-')
 
-    #Projecao u-z (coluna 0 vs coluna 2)
-    ax_uz.plot(
-        branch[:, 0],
-        branch[:, 2],
-        marker='o',
-        linestyle='-',
-        markersize=2
-    )
+    for branch in branchesImplicita:
+        points = array(branch)
+        ax.plot(points[:, 0],
+                points[:, 1],
+                fixed_point[2],
+                color = 'k',
+                linestyle = '-')
 
-    #Projecao v-z (coluna 1 vs coluna 2)
-    ax_vz.plot(
-        branch[:, 1],
-        branch[:, 2],
-        marker='o',
-        linestyle='-',
-        markersize=2
-    )
+    #Abre espaco para os cones (vetores 3D)
+    # if(alpha != 0):
+        # lv.plotVecsLambdaZWB(ax, alpha, branches, 25, True) #Plotagem dos vetores
 
-#Projecao u vs z
-ax_uz.set_xlabel("u")
-ax_uz.set_ylabel("z")
-ax_uz.set_title("Projection u vs z")
-ax_uz.set_xlim(0, 1)
-ax_uz.set_ylim(0, 1)
-ax_uz.grid(True)
+    #Plot do ponto fixo
+    x_bar, y_bar = fun.map(fixed_point[0], fixed_point[1], ini.baricentrica())
+    fixed_point_3d = [x_bar, y_bar, fixed_point[2]]
 
-#Projecao v vs z
-ax_vz.set_xlabel("v")
-ax_vz.set_ylabel("z")
-ax_vz.set_title("Projection v vs z")
-ax_vz.set_xlim(0, 1)
-ax_vz.set_ylim(0, 1)
-ax_vz.grid(True)
+    ax.scatter(*fixed_point_3d, color='black', s=40, depthshade=False)
 
-plt.tight_layout()
-plt.show()
+
+def plotHugoniotProjecoes(
+        fixed_point,
+        branches,
+        branchesImplicitas,
+        colors
+):
+    #Plot do ponto fixo no ambiente 3D
+    x_bar, y_bar = fun.map(fixed_point[0], fixed_point[1], ini.baricentrica())
+    fixed_point_3d = [x_bar, y_bar, fixed_point[2]]
+
+    u0, v0, z0 = fixed_point_3d
+
+    fig1, ax_uz = plt.subplots(figsize = (5,5)) 
+    fig2, ax_vz = plt.subplots(figsize = (5,5))
+    fig3, ax_uv = plt.subplots(figsize = (5,5))
+
+    #Plot do Ponto fixo nas projecoes
+    ax_uz.plot(u0, z0, marker='o', color='k')
+    ax_vz.plot(v0, z0, marker='o', color='k')
+    ax_uv.plot(u0, v0, marker='o', color='k')
+
+    for i, branch in enumerate(branches):
+        if len(branch) == 0:
+            continue
+
+        u_vals = [point[0][0] for point in branch]
+        v_vals = [point[0][1] for point in branch]
+        z_vals = [point[0][2] for point in branch]
+
+        #============
+        #Projecao u-z
+        #============
+        ax_uz.plot(
+            u_vals,
+            z_vals,
+            linestyle='-',
+            color = colors[i],
+            markersize=2
+        )
+
+        #============
+        #Projecao v-z
+        #============
+        ax_vz.plot(
+            v_vals,
+            z_vals,
+            linestyle='-',
+            color = colors[i],
+            markersize=2
+        )
+
+        
+        #============
+        #Projecao u-v
+        #============
+        #Pontos da branch Hugoniot
+        ax_uv.plot(
+            u_vals,
+            v_vals,
+            linestyle = '-',
+            color = colors[i],
+            markersize = 2
+        )
+
+    #==========================
+    #Plot da Hugoniot implicita
+    #==========================
+    for branch in branchesImplicitas:
+        #Pontos da branch Hugoniot implicita
+        u_imp = [p[0] for p in branch]
+        v_imp = [p[1] for p in branch]
+
+        ax_uv.plot(
+            u_imp,
+            v_imp,
+            linestyle = '--',
+            color = 'k',
+            markersize = 2
+        )
+
+    #Projecao u vs z
+    ax_uz.set_xlabel("u")
+    ax_uz.set_ylabel("z")
+    ax_uz.set_title("Projection u vs z")
+    ax_uz.set_xlim(0, 1)
+    ax_uz.set_ylim(0, 1)
+    ax_uz.grid(True)
+
+    #Projecao v vs z
+    ax_vz.set_xlabel("v")
+    ax_vz.set_ylabel("z")
+    ax_vz.set_title("Projection v vs z")
+    ax_vz.set_xlim(0, 1)
+    ax_vz.set_ylim(0, 1)
+    ax_vz.grid(True)
+
+    #Projecao u vs v
+    ax_uv.set_xlabel("u")
+    ax_uv.set_ylabel("v")
+    ax_uv.set_title("Projection u vs v")
+    triangulo(ax_uv, ini.baricentrica())
+    ax_uv.set_xlim(0, 1)
+    ax_uv.set_ylim(0, 1)
+    ax_uv.grid(True)
+
+
+    plt.tight_layout()
