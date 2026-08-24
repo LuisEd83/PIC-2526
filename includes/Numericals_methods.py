@@ -87,7 +87,7 @@ def Bisection_method(interval : list, bisection_config : list, function, z, alph
         return function(x, y, z) - fun.lbdc(x, y, z)
     
     Points = []                               #Variavel para armazenar os pontos
-    altura = sqrt(3)/2 if baricentrica else 1 #Constante para controle de altura
+    altura = 1 #Constante para controle de altura
 
     for _ in range(N):
         if(vk >= altura):                  #Quebra iteracao se a linha v = k estiver fora do triangulo
@@ -129,152 +129,175 @@ def Bisection_method(interval : list, bisection_config : list, function, z, alph
 
     return Points
 
+def smoller_Point(
+                alpha : float, #Variavel de controle
+                u0    : float, #Componente u do ponto fixo
+                v0    : float, #Componente v do ponto fixo
+                z0    : float, #Componente z do ponto fixo
+                sig0  : float, #Componente sig do ponto fixo
+                h     : float, #Passo
+                TOL   : float  #Tolerancia para a norma do Maximo
+                ) -> list:
 
-#Relacionado ao campo de vetores de Hugonoit
-#   ->alpha:        variavel de controle
-#   ->guess_point:  Ponto inicial de chute
-#   ->Point:        Ponto inicial para a integração
-#   ->integ_config: configuração para integração
-#=> Retorno: um array numpy de pontos
-def RungeKutta4(
-        alpha              : float,
-        fixed_point        : list,
-        Point              : list,
-        integ_config       : list
-) -> array:
-    #Extraindo ponto de chute
+    import includes.Campo_Ez as ce
+
+    #Cria uma copia do passo
+    h0 = h
+
+    #Variavel para o criterio de parada 
+    MAX_ITERATOR = 1000
+    it = 0 
+
+    while(True):
+        uk = u0 + h0 * ce.P(u0, v0, z0, alpha)
+        vk = v0 + h0 * ce.Q(u0, v0, z0, alpha)
+        zk = z0 + h0 * ce.R(u0, v0, z0, alpha)
+        sigk = lambdz(u0, v0, z0, alpha) + h0 * 0.5 #o 0.5 veio do Smoller
+
+        #Norma do maximo
+        #norm = abs(zk - z0) <= FUturamente
+        norm = max(abs(uk - u0), abs(vk - v0), abs(zk - z0), abs(sigk - sig0))
+
+        if(norm < TOL):
+            h0 += h
+            it += 1
+            if(it == MAX_ITERATOR):
+                print(f"[ERROR] - Ponto singular?")
+                print(f"[ERROR] - Ponto fixo: {u0, v0, z0}")
+                print(f"[ERROR] - Ponto calculado apos {it} iteracoes: {uk, vk, zk}")
+                print(f"[ERROR] - Valor da norma do Maximo: {norm}")
+                exit()
+
+        else:
+            print(f"[LOG] - Ponto calculado apos {it} iteracoes: {uk, vk, zk}")
+            print(f"[LOG] - Valor da norma do Maximo: {norm}")
+            print(f"[LOG] - valor do h0 : {h0} ")
+            break
+    
+    return uk, vk, zk, sigk
+
+def HugoniotNewtonRaphson_method(
+        alpha           : float,
+        current_point   : list,
+        fixed_point     : list,
+        tol      = 1e-11,
+        max_iter = 100,
+        gama     = 0.25             #Variavel de controle do passo do metodo de Newton-Raphson
+):
+
+    """
+    [IDEIA] - Utilizar as funções F e G em conjunto com o método de Newton-Raphon para
+              funções multivariáveis para localizar, no plano z = k, a sua raíz e cor-
+              rigir, assim, a curva Hugoniot para cada ponto.
+
+              Para o jacobiano que será necessário, já possuímos as derivadas parciais
+              para cada variável (u, v e z), como estamos trabalhando em um plano z = k,
+              a matriz jacobiana será 2x2, tornando o trabalho mais "fácil".
+    """
+
+    #Extraindo as componentes:
+    #U0
     u0, v0, z0 = fixed_point
 
-    #Extraindo ponto inicial 
-    u1, v1, z1 = Point
+    #U1
+    u1, v1, z1 = current_point
 
-    #Extraindo configuracao de integracao
+    def deltaUV(u, v):
+        #Avaliacao das funcoes
+        F = ch.F(u0, v0, z0, u, v, z1)
+        G = ch.G(alpha, u0, v0, z0, u, v, z1)
+
+        #Avaliacao das derivadas parciais(Jacobiano 2x2)
+        Fu = ch.Fu(u0, v0, z0, u, v, z1)
+        Fv = ch.Fv(u0, v0, z0, u, v, z1)
+        Gu = ch.Gu(alpha, u0, v0, z0, u, v, z1)
+        Gv = ch.Gv(alpha, u0, z0, u, v, z1)
+
+        #Determinante do Jacobiano
+        dJ = Fu * Gv - Fv * Gu
+        # print(f"Valor do det|J(u,v)| = {dJ}")
+
+        if(abs(dJ) < 1e-12):
+            raise ValueError("Jacobiano singular ou muito próximo de zero.")
+
+        #Solucao exata da inversao da matriz 2x2: J * delta = -F
+        du = gama * ((Fv * G - Gv * F) / dJ)
+        dv = gama * ((Gu * F - Fu * G) / dJ)
+
+        return du, dv, F, G, dJ
+
+    #Definindo o ponto de partida no plano z = z1
+    uk, vk = u1, v1
+
+    for it in range(max_iter):
+        du, dv, F, G, dJ = deltaUV(uk, vk)
+        #Critério de parada: norma dos residuos |F| e |G| abaixo da tolerancia
+        if((abs(F) < tol) and (abs(G) < tol)):
+            return uk, vk
+        
+        #Atualizacao dos pontos
+        uk += du
+        vk += dv
+
+
+    raise RuntimeError("[ERROR] - O metodo de Newton-Raphson nao convergiu dentro do numero maximo de iteracoes")
+
+def HugonioutEuler_method(
+            alpha        : float,   #Variavel de controle   
+            fixed_point  : list,    #Ponto fixo
+            integ_config : list,    #Configuracao para integracao
+            U4 = None,              #Ponto 
+            flag = True,            #Flag para ativar ou nao o smoller
+            tol = 1e-7,             #Tolerancia default
+):
+    #Extraindo ponto fixo:
+    u0, v0, z0 = fixed_point
+    sig0 = lambdz(u0, v0, z0, alpha) #sigma inicial
+
+    #Extraindo configuracao da integracao
     h, N = integ_config
-    
-    #Inicializando variaveis para o metodo de Runge-Kutta
-    uk = u1
-    vk = v1
-    zk = z1
 
-    #Inicializando uma lista de pontos:
-    Points = [[u1, v1, z1]]
+    #iniciando a lista de pontos
+    Points = [[u0, v0, z0, sig0]] if(flag) else []
+
+    #Iniciando os pontos iniciais para integracao
+    uSmoller, vSmoller, zSmoller, sigSmoller = smoller_Point(alpha, u0, v0, z0, sig0, h, tol)
+
+    uk, vk, zk, sigk = (uSmoller, vSmoller, zSmoller, sigSmoller) if(flag) else U4
+    Points.append([uk, vk, zk, sigk])
+
+    #nova tolerancia:
+    zTol = abs(zSmoller - z0)
+
+    if(ch.R_sig(alpha, uk, vk, zk, sigk, u0, v0, z0) > 0):
+        if(((zk > z0) and (h < 0)) or ((zk < z0) and (h > 0))):
+            h = -h
+    else:
+        if(((zk > z0) and (h > 0)) or ((zk < z0) and (h < 0))):
+            h = -h
 
     for _ in range(N):
+        if(abs(ch.F(u0, v0, z0, uk, vk, zk)) > tol or abs(ch.G(alpha, u0, v0, z0, uk, vk, zk)) > tol):
+            try:
+                uk, vk = HugoniotNewtonRaphson_method(alpha, [uk, vk, zk], fixed_point)
+                sigk = ch.sigm(alpha, uk, vk, zk, u0, v0, z0)
+            except Exception as e:
+                print(f"[LOG] - {e}")
 
-        #Relacionado a variavel u:
-        k1 = ch.Hug1(alpha, u0, v0, z0, uk, vk, zk)
-        k2 = ch.Hug1(alpha, u0, v0, z0, uk + (h*k1)/2, vk + (h*k1)/2, zk + (h*k1)/2)
-        k3 = ch.Hug1(alpha, u0, v0, z0, uk + (h*k2)/2, vk + (h*k2)/2, zk + (h*k2)/2)
-        k4 = ch.Hug1(alpha, u0, v0, z0, uk + (h*k3), vk + (h*k3), zk + (h*k3))
+        ukp1    = uk   +  h * ch.P_sig(alpha, uk, vk, zk, sigk, u0, v0, z0)
+        vkp1    = vk   +  h * ch.Q_sig(alpha, uk, vk, zk, sigk, u0, v0, z0)
+        zkp1    = zk   +  h * ch.R_sig(alpha, uk, vk, zk, sigk, u0, v0, z0)
+        sigkp1  = sigk +  h * ch.S(alpha, uk, vk, zk, sigk, u0, v0, z0)
 
-        uk = uk + (h/6) * (k1 + 2*k2 + 2*k3 + k4) #Atualizo o valor de uk
+        #Appendo o ponto
+        Points.append([ukp1, vkp1, zkp1, sigkp1])
 
-        #Relacionado a variavel v:
-        k1 = ch.Hug2(alpha, u0, v0, z0, uk, vk, zk)
-        k2 = ch.Hug2(alpha, u0, v0, z0, uk + (h*k1)/2, vk + (h*k1)/2, zk + (h*k1)/2)
-        k3 = ch.Hug2(alpha, u0, v0, z0, uk + (h*k2)/2, vk + (h*k2)/2, zk + (h*k2)/2)
-        k4 = ch.Hug2(alpha, u0, v0, z0, uk + (h*k3), vk + (h*k3), zk + (h*k3))
-
-        vk = vk + (h/6) * (k1 + 2*k2 + 2*k3 + k4) #Atualizo o valor de vk
-
-        #Relacionado a variavel z:
-        k1 = ch.Hug3(alpha, u0, v0, z0, uk, vk, zk)
-        k2 = ch.Hug3(alpha, u0, v0, z0, uk + (h*k1)/2, vk + (h*k1)/2, zk + (h*k1)/2)
-        k3 = ch.Hug3(alpha, u0, v0, z0, uk + (h*k2)/2, vk + (h*k2)/2, zk + (h*k2)/2)
-        k4 = ch.Hug3(alpha, u0, v0, z0, uk + (h*k3), vk + (h*k3), zk + (h*k3))
-
-        zk = zk + (h/6) * (k1 + 2*k2 + 2*k3 + k4) #Atualizo o valor de zk
-
-        #Por conta da construcao do problema:
-        if(abs(zk - z0) < 2e-1): #zk nao deve ficar proximo de z0
-            break
-
-        Points.append([uk, vk, zk])               #Armazeno o ponto
-
-    #Definindo um array para armazenar pontos (com tamanho N + 1):
-    Points = array(Points, float)
-
-    return Points
-
-def runge_Kutta_Scipy(
-        alpha              : float,
-        guess_point        : list,
-        Point              : list,
-        integ_config       : dict
-):
-    import scipy.integrate as solve_ip
-
-    #Funcao que serah utilizada no runge-kutta 5 (do scipy)
-    def function(s, state : list):
-        u, v, z = state
-
-        H = ch.CampoHug(alpha, guess_point[0], guess_point[1], guess_point[2], u, v, z) 
-
-        return[H[0], H[1], H[2]]
-
-    #Configuracao para integracao
-    s_inicial = integ_config['s_inicial']
-    s_final   = integ_config['s_final']
-    n_pontos  = integ_config['n_pontos']
-
-
-    s_span = (s_inicial, s_final)                   #Intervalo de integracao
-    s_eval = linspace(s_inicial, s_final, n_pontos) #Particao do intervalo de integracao
-
-    solucao = solve_ip.solve_ivp(
-        function,
-        s_span,
-        Point,
-        method = 'RK45',
-        t_eval = s_eval
-    )
-
-    #solucao.y tem o formato (3, N) -> 3 variáveis ao longo de N pontos
-    #solucao.y.T inverte para (N, 3) -> N pontos, cada um com 3 coordenadas [u, v, z]
-    Points = array(solucao.y.T, dtype = float)
-
-    return Points
-
-def HugonioutEuler_method(alpha, fixed_point : list, P_chute : list, integ_config : list, TOL = 5e-3):
-    #Extraindo ponto fixado
-    u0, v0, z0 = fixed_point 
-
-    #Extraindo ponto inicial para integracao
-    u1, v1, z1 = P_chute #U1
-
-    #Extraindo configuracao de integracao
-    h, N = integ_config
-    
-    #Inicializando variaveis para o metodo de Euler
-    uk = u1
-    vk = v1
-    zk = z1
-
-    #Inicializando uma lista de pontos:
-    Points = [[u1, v1, z1]]
-
-    #Calculando e armazenando os resultados do metodo de Euler:
-    for _ in range(N): #O laco vai repetir N vezes
-        #Realizo o passo (obs: kp1 = k + 1)
-        #(alpha, u0, v0, z0, u, v, z):
-        ukp1 = uk + h * ch.Hug1(alpha, u0, v0, z0, uk, vk, zk)
-        vkp1 = vk + h * ch.Hug2(alpha, u0, v0, z0, uk, vk, zk)
-        zkp1 = zk + h * ch.Hug3(alpha, u0, v0, z0, uk, vk, zk)
-
-        if((abs(zkp1 - z0) <= TOL)):
-            break
-
-        # if(ch.Norma(alpha, u0, v0, z0, ukp1, vkp1, zkp1) < TOL):
-        #     break
-
-        #Armazenando os valores na lista de pontos
-        Points.append([ukp1, vkp1, zkp1])
-
-        #Atualizo os valores das variaives uk, vk e zk 
-        uk = ukp1
-        vk = vkp1
-        zk = zkp1
-
-    #Definindo um array para armazenar pontos (com tamanho N + 1):
-    Points = array(Points, float)
-    return Points
+        #Se o ponto atual estiver proximo do plano z = z0 ou z = 0
+        if((abs(zkp1 - z0) < zTol) or (abs(zkp1) < tol)):
+            break;
+        
+        #Atualizo os componentes usando Euler
+        uk, vk, zk, sigk = ukp1, vkp1, zkp1, sigkp1
+            
+    Points = array(Points, float)                       #Transformo em um array numpy
+    return [[[p[0], p[1], p[2]], p[3]] for p in Points] #Retorno da forma [[u, v, z], sig]
