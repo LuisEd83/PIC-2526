@@ -12,11 +12,14 @@ import includes.Inicia as ini
 
 import numpy as np
 
-def plotVecsLambdaZWB(ax, alpha, branches, delta):
+def plotVecsLambdaZWB(ax, alpha, branches, delta, isHugoniot = False):
     import includes.Auxiliar_Functions as af
 
     def is_continuous(p_last, p_first, tol=1e-2):
         return np.allclose(p_last, p_first, atol=tol)
+
+    #Manipula as branches caso seja a branch hugoniot (modelo [[u, v, z], sigma]) e converte para branch (modelo [u, v, z])
+
 
     #Agrupa branches contínuas em segmentos
     segments = []
