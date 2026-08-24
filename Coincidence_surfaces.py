@@ -96,6 +96,18 @@ def coicindenceCurves(alpha, curveConfig, numCortes):
     auto_branches = b.Branches_auto(curveConfig, numCortes, alpha, base = 0, altura = 1)
     auto_colors = b.Branches_auto_colors()
 
+    #mapeio para a coordenada baricentrica
+    if(ini.baricentrica()):
+        for branches in auto_branches:
+            for branch in branches:
+                for point in branch:
+                    u, v, _ = point
+
+                    u, v = map(u, v, ini.baricentrica())
+
+                    point[0] = u
+                    point[1] = v
+
     plotCoicindenceCurves(ax, auto_branches, auto_colors)
 
     #Inicia plotagem
