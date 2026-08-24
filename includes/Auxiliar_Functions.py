@@ -19,7 +19,7 @@ def transparencia():
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
 #nivel lambda_s = lambda_z
 def branchSlow(): 
-    s = 1 #s = 1 para permitir que seja plotado o ramo
+    s = 0 #s = 1 para permitir que seja plotado o ramo
     return s
 
 #Definindo uma funcao responsavel por permitir a plotagem dos ramos relacionados a curva de
@@ -47,8 +47,6 @@ def az(z): #Da/dz
     return 1/(1+z**2)
 """
 
-"""
-"""
 #Funcao sigmoide
 #Supondo k pequeno:
 k = 0.01
@@ -62,20 +60,20 @@ def lambdz(u, v, z, alpha):
     return(fun.fw(u, v, z)/(u + alpha*az(z)))
 
 #Derivada direcional de lambdZ com direcao dos campos
-#def Dlambdz(u, v, z, alpha):
-#    from Campo_Ez import campos
-#
-#    #Calculando gradiente:
-#    pc = (fun.Du(u, v, z) * (u + alpha*az(z)) - fun.fw(u, v, z))/((u+alpha*az(z))**2)                       #Primeira componente
-#    sc = (fun.Dv(u, v, z))/(u + alpha*az(z))                                                                #Segunda componente
-#    tc = (fun.Dc(u, v, z) * (u + alpha*az(z)) + fun.fw(u, v, z) * (alpha*np.sin(z)))/((u + alpha*az(z))**2) #Terceira componente
-#
-#    #Extraindo campos (componentes de direção)
-#    camps = campos(u, v, z, alpha)
-#
-#    #O return sera o produto intero entre o gradiente e a direcao da curva integral (que eh, no fim das contas, os campos)
-#    return (pc*camps[0] + sc*camps[1] + tc*camps[2])
-#
+# def Dlambdz(u, v, z, sigma, u0, v0, z0, alpha):
+#     from includes.Campo_Hugoniot import campo
+
+#     #Calculando gradiente:
+#     pc = (fun.Du(u, v, z) * (u + alpha*az(z)) - fun.fw(u, v, z))/((u+alpha*az(z))**2)                       #Primeira componente
+#     sc = (fun.Dv(u, v, z))/(u + alpha*az(z))                                                                #Segunda componente
+#     tc = (fun.Dc(u, v, z) * (u + alpha*az(z)) + fun.fw(u, v, z) * (alpha*np.sin(z)))/((u + alpha*az(z))**2) #Terceira componente
+
+#     #Extraindo campos (componentes de direção)
+#     camps = campo(alpha, u, v, z, sigma, u0, v0, z0)
+
+#     #O return sera o produto intero entre o gradiente e a direcao da curva integral (que eh, no fim das contas, os campos)
+#     return (pc*camps[0] + sc*camps[1] + tc*camps[2])
+
 #def color_point(colors : list, Point, alpha): #Determina a cor do ponto a partir da derivada do Lambda_z
 #    if(Dlambdz(*Point, alpha) > 0):
 #        colors.append('r')
@@ -248,7 +246,7 @@ def hugoniotSystemSolver(
                         z0: float,            #Componente z do ponto fixo
                         z: float,             #Plano z constante
                         alpha: float,         #Variavel de controle
-                        TOL = 1e-4,           #Tolerancia
+                        TOL = 1e-6,           #Tolerancia
                         TOL_residual = 1e-8   #Tolerancia 
                         ) -> list:
     
@@ -272,9 +270,6 @@ def hugoniotSystemSolver(
                    retorna uma lista contendo as solucoes do sistema, os valores de F, G na malha
                    e a malha UxV.
     """
-
-    if(abs(z - z0) < TOL):
-        return [], [], [], [], []
 
     #Grade de valores
     u_vals = np.linspace(initialValue, finalValue, Resol)   #Cria a reta u com 200 pontos
@@ -338,7 +333,6 @@ def hugoniotSystemSolver(
 
     return [U, V, ZF, ZG, candidatas]
 
-
 def sigma(
         u  : float,
         v  : float,
@@ -358,3 +352,172 @@ def sigma(
         return (g - g0)/(v - v0)
 
     return (f - f0)/(u - u0)
+
+def HugoniotPlanaImplicita(
+        alpha : float, #Variavel de controle
+        u0    : float, #Componente u do ponto fixo
+        v0    : float, #Componente v do ponto fixo
+        z0    : float, #Componente z do ponto fixo
+        TOL   : float  #Tolerancia para a norma do Maximo
+):  
+    from matplotlib.pyplot import contour 
+    
+    def H(u,v):
+        return (fun.fw(u,v,z0) - fun.fw(u0,v0,z0))*(v-v0) - (fun.fo(u,v,z0) - fun.fo(u0,v0,z0))*(u-u0)
+
+    # def sig(u, v):
+    #     FT = ((fun.fw(u,v,z0) * (v - v0))/(u0 + alpha * az(z0)) - (fun.fo(u,v,z0) - fun.fo(u0,v0,z0)))*(u - u0)
+    #     ST = H(u, v)
+    #     return FT - ST
+
+    #Define um grid no quadrado [0, 1] X [0, 1]
+    x = np.linspace(0.0, 1.0, 750)
+    y = np.linspace(0.0, 1.0, 750)
+    X, Y = np.meshgrid(x, y)
+
+    Hl = H(X, Y)                    #Hl armazena os pontos em todo o grid [0, 1] X [0, 1]
+    Hl = np.where(X + Y < 1, Hl, np.nan)  #Agora Hl armazena os pontos no triangulo X + Y < 1
+
+    #Guarde a referencia da curva na variavel 'cs'
+    cs = contour(X, Y, Hl, [0], alpha = 0)
+
+    """
+    =====================================================
+    PASSO 1: separa cada Path em polilinhas desconectadas
+    =====================================================
+    [Explicacao] - cs.get_path retorna um segmento contendo varios pontos.
+                   O que pode acontecer eh: um "segmento" contendo pontos
+                   nao conectados, i.e, pontos que estao distantes, mas o
+                   matplotlib os concatenam. Por exemplo, pode haver pon-
+                   tos proximos a regiao u = 0 e pontos proximos a u = 1,
+                   visualmente eh notorio que sao ramos distintos, mas, 
+                   para o matplotlib, sao um unico segmento.
+    """
+    polilinhas = []
+    for path in cs.get_paths():
+        path.should_simplify = False
+        for poly in path.to_polygons(closed_only = False): #Isto separa em poligonos
+            if len(poly) > 1:                              #Se houver mais de um ponto, apeenda na polilinhas
+                polilinhas.append(poly)
+
+    """
+    =====================================================
+    PASSO 2: dentro de cada polilinha, separa em ramos
+    nos pontos onde a curva toca a borda do triangulo
+    (u=0, v=0, u+v=1)
+    =====================================================
+    [Explicacao] - Com os segmentos separados, podemos separar as branhes
+                   usando os limites do triangulo (no caso, o retangulo).
+    """
+
+    dx = x[1] - x[0]     #dx varia dependendo da resolucao definida na linha 362
+    tol_limite = 2 * dx  #tolerancia ~ 2 celulas de grid em volta do triangulo
+
+    def bordaTriangulo(coordenada):
+        u, v = coordenada
+        return (u <= tol_limite) or (v <= tol_limite) or (u + v >= 1 - tol_limite)
+
+    #Lista para armazenar as branches
+    branches = []
+    for poly in polilinhas:                             #para cada conjunto de pontos
+        mask = np.array([bordaTriangulo(p) for p in poly]) #o varremos para encontrar os pontos-limites
+
+        #Caso incomum (Professor, isso eh possivel?)
+        #Se a polilinha nunca toca a borda, ela e um ramo fechado (loop) inteiro DENTRO do triangulo
+        if(not mask.any()):
+            branches.append(poly)
+            continue
+
+        #Caso normal: a polilinha vai de uma borda a outra sem tocar
+        #a borda no meio -> e um unico ramo (comportamento tipico do contour)
+        indices_borda = np.where(mask)[0] #Extrai os indices dos pontos na polilinha onde a condicao eh verdadeira
+
+        #So ha necessidade real de split se houver toques de borda
+        #nao-consecutivos no MEIO da polilinha (raro, mas possivel
+        #perto de pontos de coincidencia/singularidade da H=0)
+        cortes = [0]                            #Armazena o primeiro indice de corte (indice 0)
+        for i in range(1, len(indices_borda)):
+            if(indices_borda[i] - indices_borda[i-1] > 1): #ha ao menos 3 pontos que compoe o ramo
+                #ha um trecho interior entre dois toques de borda:
+                #fecha o ramo atual e comeca um novo a partir daqui
+                cortes.append(indices_borda[i]) #Armazena os INDICES onde irao ocorrer a separacao em ramos
+        cortes.append(len(poly))                #Armazena o ultimo indice de corte (indice len(poly))
+
+        """
+        [Explicacao] - Esse trecho (abaixo) define um intervalo
+                       [a, b] (chamado trecho) e verifica se no
+                       intervalo ha 2 pontos ou mais. Claro, ha
+                       um truque do python em
+
+                             zip(cortes[:-1], cortes[1:])
+
+                       Para pegar pares de elementos consecuti-
+                       vos de uma lista.
+        """
+        for a, b in zip(cortes[:-1], cortes[1:]): 
+            trecho = poly[a:b]
+            if len(trecho) > 10:
+                branches.append(trecho)
+
+    #=====================================================
+    #PASSO 3: em cada ramo, encontra o(s) ponto(s) onde sig(u,v) = 0
+    #via deteccao de mudanca de sinal + interpolacao/bissecao
+    #=====================================================
+    from scipy.optimize import brentq
+
+
+    """
+    [Explicacao] - Usando dois PONTOS consecutivos, pode-se 
+                   interpolar usando a parametrizacao.
+                   Com isto, podemos pegar um ponto qualquer
+                   entre os dois pontos.
+    """
+    def sigSegmento(t, p_a, p_b):
+        #t em [0,1] parametriza o segmento entre dois vertices consecutivos do ramo
+        u = p_a[0] + t * (p_b[0] - p_a[0])
+        v = p_a[1] + t * (p_b[1] - p_a[1])
+        return H(u, v)
+
+    resultados = []  #lista de (idx_do_ramo, [pontos onde sig(u,v) = 0])
+    for idx_ramo, ramo in enumerate(branches):
+        print(f"ramo {idx_ramo}: {len(ramo)} pontos")
+        sig_vals = np.array([H(p[0], p[1]) for p in ramo]) #Armazena o valor dos sigmas de CADA PONTO do ramo 
+
+        raizes_do_ramo = []                               #Armazena os pontos onde sig(u, v) = 0 na forma [idx, [pontos]]
+        for i in range(len(ramo) - 1):
+            s0, s1 = sig_vals[i], sig_vals[i+1]           #Extrai o valor do sigma do i-esimo ponto e seu sucessor
+
+            if np.isnan(s0) or np.isnan(s1):                    #Se ui ou vi sao nan
+                continue                                  #pula a atual iteracao
+
+            if s0 == 0.0:                                 #Se a extremidade inferior tiver sig = 0
+                raizes_do_ramo.append(tuple(ramo[i]))     #Armazena O PONTO.
+                continue
+
+            if s0 * s1 < 0:
+                #ha mudanca de sinal nesse segmento -> raiz aqui dentro
+
+                """
+                [Explicacao] - o brenqt utiliza metodos para encontrar
+                               raizes de funcao. Neste caso, eh notorio
+                               que sigSegmento depende exclusivamente de
+                               t, entao brentq ACHA, dado uma TOL, qual
+                               valor de t para zerar o sig entre dois 
+                               pontos.
+                
+                [Explicacao] - Portanto, como sabemos o valor de t que re-
+                               sulta em sig = 0, eh so o utilizar para en-
+                               contrar u e v que satisfacam sig(u,v) = 0.
+                """
+                t_raiz = brentq(
+                    sigSegmento, 0.0, 1.0,
+                    args=(ramo[i], ramo[i+1]), xtol=TOL
+                )
+
+                u_raiz = ramo[i][0] + t_raiz * (ramo[i+1][0] - ramo[i][0])
+                v_raiz = ramo[i][1] + t_raiz * (ramo[i+1][1] - ramo[i][1])
+                raizes_do_ramo.append((u_raiz, v_raiz))
+
+        resultados.append((idx_ramo, raizes_do_ramo))
+
+    return branches, resultados
