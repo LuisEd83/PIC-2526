@@ -10,6 +10,8 @@ ambiente3d(): Seta o ambiente 3d e devolve "axes" para plotagem 3d
 
 """
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go 
+
 
 import includes.Functions as fun
 

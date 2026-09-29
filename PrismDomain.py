@@ -42,7 +42,7 @@ ax.plot([G1,O1], [G2, O2], [cmin,cmin], 'k')
 ax.plot([W1,O1], [W2, O2], [cmin,cmin], 'k')
 
 #Triangulo no plano c = cmax
-ax.plot([G1,W1], [G2, W2], [cmax,cmax], 'k')
+ax.plot(xs = [G1,W1], ys = [G2, W2], zs = [cmax,cmax], color = 'k')
 ax.plot([G1,O1], [G2, O2], [cmax,cmax], 'k')
 ax.plot([W1,O1], [W2, O2], [cmax,cmax], 'k')
 

@@ -466,7 +466,9 @@ def Branches_Hugoniot(
             pointMH.append([bestPoint, sig(alpha, z0, u0, v0, z0)])
 
         #Variavel de altura (zmax) para aplicar o Solver da hugoniot (com z != z0)
-        hmax = pointMH[1][0][2] if(fieldSense) else pointPH[1][0][2]
+        # hmax = pointMH[1][0][2] if(fieldSense) else pointPH[1][0][2]
+        hmax = z0 - abs(z0 - pointPH[1][0][2]) if(fieldSense) else z0 - abs(z0 - pointMH[1][0][2])
+
 
         #Aplica o solver da Hugoniot para encontrar o proximo ponto para integracao
         _, _, _, _, pointsSolver = hugoniotSystemSolver(initialValue, finalValue, Resol, enableMask, u0, v0, z0, hmax, alpha, TOL = TOL)
